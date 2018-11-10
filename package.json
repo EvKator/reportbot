@@ -1,0 +1,25 @@
+{
+  "name": "reportbot",
+  "version": "1.0.0",
+  "description": "lp teamwork, bot for making reports",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "compile": "babel src --out-dir .compiled --source-maps",
+    "watch": "babel src --out-dir .compiled --source-maps --watch"
+  },
+  "author": "Isliam",
+  "license": "ISC",
+  "dependencies": {
+    "docx": "^4.4.0",
+    "docxtemplater": "^3.9.2",
+    "fs": "0.0.1-security",
+    "jszip": "^2.6.1",
+    "node-telegram-bot-api": "^0.30.0"
+  },
+  "devDependencies": {
+    "@types/node": "^10.12.5",
+    "ts-loader": "^5.3.0",
+    "typescript": "^3.1.6"
+  }
+}

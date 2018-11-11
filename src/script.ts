@@ -25,25 +25,19 @@ bot.onText(/\/start/, async function (msg : TelegramBot.Message , match: RegExpE
     }
 });
 
-bot.on('message', function(msg: TelegramBot.Message ){
-    if(msg.document){
+bot.on('message', async function(msg: TelegramBot.Message ){
+    let user = await User.getSender(msg);
+    if(user.status == "crtemplate" && msg.document){
         console.log(msg.document.file_name);
         console.log("message");
         bot.sendMessage(msg.chat.id, msg.document.file_id);
-        }
-        var file = bot.getFile(msg.document.file_id).then(function (resp : any) {
-            // if (resp.file_size < max_file_size){
-                bot.downloadFile(msg.document.file_id, "templates/").then(function (resp : any) {
-                    console.log(resp);
-                    // downloaded
-                });
-                console.log(resp);
-            // }
-            // else{
-                // too large
-            // }
-            });
-        // console.log(bot.getFile(,msg.document.file_id));
+
+        let a = await bot.downloadFile(msg.document.file_id, "templates/");
+        
+    }
+        // let file : TelegramBot.File = await bot.getFile(msg.document.file_id);
+        
+        
 })
 
 
@@ -78,6 +72,10 @@ bot.on('callback_query', async function (msg : TelegramBot.CallbackQuery ) {
                 Menu.sendMenu(user);
                 user.status = 'free';
                 break;
+
+            case '/crtemplate':
+                Menu.sendTextMessage(user, "Send your template");
+                user.status = 'crtemplate'
                 
             case '/earn_vk_subscribers_task':
             case '/earn_tg_post_view_task':

@@ -1,4 +1,4 @@
-import {User} from "../src/user";
+import {User, IUser} from "../src/user";
 import { Template } from "./template";
 
 const MongoClient = require('mongodb').MongoClient;
@@ -8,11 +8,10 @@ const db_name = 'polrebortbot';
 
 export default class DB
 {
-    static async UpdateUser(user: User){
-        let jsonU = user.toJSON();
+    static async UpdateUser(user: IUser ){
         let client = await MongoClient.connect(db_url);
         const db = client.db(db_name);
-        await db.collection('users').update({id : user.id}, jsonU);
+        await db.collection('users').update({id : user.id}, user);
         await client.close();
     }
 
@@ -22,14 +21,13 @@ export default class DB
         return db.collection('users');
     }
 
-    static async InsertUser(user: User){
-        console.log(JSON.stringify(user));
-        const jsonU = user.toJSON();
+    static async InsertUser(user: IUser){
         let client = await MongoClient.connect(db_url);
         const db = client.db(db_name);
-        await db.collection('users').insertOne(jsonU);
+        await db.collection('users').insertOne(user);
         await client.close();
     }
+
 
     static async GetUser(id: number){
         const collection = await DB.GetUsersCollection();

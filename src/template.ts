@@ -4,45 +4,29 @@ import DB from './DB';
 import * as fs from 'fs';
 import * as Path from 'path';
 
-interface ITemplate{
+export interface ITemplate{
     name: string,
     path: string,
-    author_id : number
+    placeholdersCount: number
 }
 
-export class Template{
+export class Template implements ITemplate {
     private _name: string;
     private _path: string;
-    private _author_id: number;
+    private _placeholdersCount : number;
 
 
-    constructor(author_id : number, name:string, path?: string){
+    constructor(placeholdersCount : number, name:string, path?: string){
+        // super();
         this._name = name;
-        this._author_id = author_id;
+        this._placeholdersCount = placeholdersCount;
         if(typeof(path) == "undefined")
             this._path = "";
         else
             this._path = path;
     }
     
-    getFreePath(){
-        let fileName = this.name;
-        let i = 0;
-        while(  fs.existsSync(Template.folderName + "/" + fileName)){
-            fileName = this.name + i.toString() + ".docx";
-        }
-        return fileName;
-    }
-
-    async save(){
-        await this.saveToDB();
-        // fs.
-    }
-    
-
-    async saveToDB(){
-        await DB.InsertTemplate(this);
-    }
+   
 
     static async fromDB(name: string){
         var jsonT = await DB.GetTemplate(name);
@@ -53,14 +37,14 @@ export class Template{
 
 
     static fromJSON(jsonT: ITemplate){
-        return new Template(jsonT.author_id, jsonT.name, jsonT.path);
+        return new Template(jsonT.placeholdersCount, jsonT.name, jsonT.path);
     }
 
     toJSON() : ITemplate {
         let jsonU = {
             name : this.name,
             path : this.path,
-            author_id : this.author_id
+            placeholdersCount: this._placeholdersCount
         };
         return jsonU;
     }
@@ -76,6 +60,10 @@ export class Template{
 
     get name(): string{
         return this._name;
+    }
+
+    get placeholdersCount(): number{
+        return this._placeholdersCount;
     }
 
     set path(path: string){

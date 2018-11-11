@@ -1,6 +1,7 @@
 import {bot} from '../src/telegram_connection';
 
 import {User} from '../src/user';
+import { Template } from './template';
 
 interface TLReplyMatkup{
     inline_keyboard: [[string, string]
@@ -13,7 +14,7 @@ export class Menu {
         const text = "What do you want to do?";
         const reply_markup = {
                 "inline_keyboard": [
-                    [{"text": "Stats", "callback_data": "/stats"}],
+                    [{"text": "My templates", "callback_data": "/templates"}],
                     [{"text": "Create report", "callback_data": "/crreport"}],
                     [{"text": "Create template", "callback_data": "/crtemplate"}],
                     [{"text": "Support", "url": "https://telegram.me/u221b", "callback_data": "https://telegram.me/u221b"}]
@@ -23,29 +24,36 @@ export class Menu {
     }
 
 
-    static async sendVkCreationTaskMenu(user: User) {
-        const text = "?";
-        const reply_markup = {
-            "inline_keyboard": [
-                [{"text": "Back", "callback_data": "/menu"}]
-            ]
-        };
-        await Menu._sendMessage(user,text,reply_markup);
-    }
-
 
 
     static async sendStats(user: User) {
         const parse_mode = 'Markdown';
         const reply_markup = {
             "inline_keyboard": [
-                [{"text": "В меню!", "callback_data": "/menu"}]
+                [{"text": "Back", "callback_data": "/menu"}]
             ]
         };
         // let text = "Баланс: " + user.balance + " руб" + "\n";
 
         
         await Menu._sendMessage(user, " ",reply_markup, parse_mode);
+    }
+
+
+    static async sendUserTemplates(user: User) {
+        const parse_mode = 'Markdown';
+        const reply_markup = {
+            "inline_keyboard": [
+                [{"text": "Back", "callback_data": "/menu"}]
+            ]
+        };
+        let text = "";
+        for(let i = 0; i < user.templates.length; i++)
+            text+= user.templates[i].name + ` ----- /template${i}  \n`
+        // let text = "Баланс: " + user.balance + " руб" + "\n";
+
+        
+        await Menu._sendMessage(user, text ,reply_markup, parse_mode);
     }
 
     

@@ -7,6 +7,8 @@ console.log("XYUU1123123123123");
 
 import {bot} from "../src/telegram_connection";
 import { TelegramBot } from "node-telegram-bot-api";
+import { Template } from "./template";
+import { Report } from "./report";
 
 
 
@@ -14,6 +16,7 @@ import { TelegramBot } from "node-telegram-bot-api";
 bot.onText(/\/start/, async function (msg : TelegramBot.Message , match: RegExpExecArray) {
     
     let user = await User.getSender(msg);
+    user.last_message_id = msg.message_id;
     if(!user.ExistInDB){
         await user.saveToDB();
         var greeting = "Hi!";
@@ -25,33 +28,59 @@ bot.onText(/\/start/, async function (msg : TelegramBot.Message , match: RegExpE
     }
 });
 
+
+
+bot.onText(/\/template(\d)/, async function (msg : TelegramBot.Message , match: RegExpExecArray) {
+    
+    let user = await User.getSender(msg);
+    let templateNum : number = Number(match[1]) ;
+    
+    user.last_message_id = msg.message_id;
+    if(!user.ExistInDB)
+        await user.saveToDB();
+    if(user.templates && user.templates.length > templateNum){
+        user.status = match[0];
+        user.addReport(new Report())
+        Menu.sendTextMessage(user, "send your replacers" );
+    }
+    Menu.sendMenu(user);
+});
+
+
 bot.on('message', async function(msg: TelegramBot.Message ){
     let user = await User.getSender(msg);
+    user.last_message_id = msg.message_id;
+
+
+    const templateNumPattern = /\/template(\d)/g;
+
+
+                if(user.status.search(templateNumPattern) >= 0 ){
+                    let templateNum: number = Number(templateNumPattern.exec(user.status)[1]);
+                    let template = user.templates[templateNum];
+                    
+                    let report =
+                    user.status = 'free';
+                    nMenu.sendNextTaskMenu(user, task.type , text);
+                }
+
     if(user.status == "crtemplate" && msg.document){
         console.log(msg.document.file_name);
-        console.log("message");
-        bot.sendMessage(msg.chat.id, msg.document.file_id);
-
-        let a = await bot.downloadFile(msg.document.file_id, "templates/");
-        
-    }
-        // let file : TelegramBot.File = await bot.getFile(msg.document.file_id);
-        
-        
-})
-
-
-
-
-
-bot.onText(/(.*)/, async function (msg : TelegramBot.Message , match: RegExpExecArray) {
-    if(msg.document){
-    console.log(msg.document.file_name);
-    console.log("message");
-    bot.sendMessage(msg.chat.id, msg.document.file_name);
+        let file : TelegramBot.File = await bot.getFile(msg.document.file_id);
+        let a: string = await bot.downloadFile(msg.document.file_id, "templates/");
+        let template = new Template(user.id, msg.document.file_name, "templates/" + file.file_path );
+        user.addTemplate(template);
+        user.status = "free";
     }
 });
 
+bot.onText(/\/menu/, async function (msg : TelegramBot.Message, match: RegExpMatchArray) {
+    let user = await User.getSender(msg);
+    if(!user.ExistInDB)
+        await user.saveToDB();
+    user.last_message_id = msg.message_id;
+    Menu.sendMenu(user);
+});
 
 
 bot.on('callback_query', async function (msg : TelegramBot.CallbackQuery ) {
@@ -60,6 +89,7 @@ bot.on('callback_query', async function (msg : TelegramBot.CallbackQuery ) {
         await user.saveToDB();
     try{
         switch (msg.data){
+            
             case '/replenishMoney':
                 throw "Автоматизированная данная функция появится в течение недели. Сейчас для пополнения можете обратиться напрямую в \"Помощь\"";
                 user.status = 'free';
@@ -75,8 +105,11 @@ bot.on('callback_query', async function (msg : TelegramBot.CallbackQuery ) {
 
             case '/crtemplate':
                 Menu.sendTextMessage(user, "Send your template");
-                user.status = 'crtemplate'
-                
+                user.status = 'crtemplate';
+                break;
+            case '/templates':
+                Menu.sendUserTemplates(user);
+                break;
             case '/earn_vk_subscribers_task':
             case '/earn_tg_post_view_task':
             case '/earn_tg_subscribers_task':

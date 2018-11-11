@@ -5,20 +5,30 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "run1": " node ./dist/bundle.js",
     "compile": "babel src --out-dir .compiled --source-maps",
-    "watch": "babel src --out-dir .compiled --source-maps --watch"
+    "watch": "babel src --out-dir .compiled --source-maps --watch",
+    "dev": "concurrently --kill-others \" webpack \" npm run run1"
   },
   "author": "Isliam",
   "license": "ISC",
   "dependencies": {
+    "@babel/core": "^7.1.5",
+    "babel": "^6.23.0",
+    "babel-cli": "^6.26.0",
+    "babel-loader": "^8.0.4",
     "docx": "^4.4.0",
     "docxtemplater": "^3.9.2",
     "fs": "0.0.1-security",
     "jszip": "^2.6.1",
+    "mongo": "^0.1.0",
     "node-telegram-bot-api": "^0.30.0"
   },
   "devDependencies": {
+    "@types/mongodb": "^3.1.14",
     "@types/node": "^10.12.5",
+    "@types/node-telegram-bot-api": "^0.30.3",
+    "concurrently": "^4.0.1",
     "ts-loader": "^5.3.0",
     "typescript": "^3.1.6"
   }

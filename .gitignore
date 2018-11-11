@@ -1,4 +1,7 @@
 .idea
 .vscode
+.docx
 node_modules
+templates
+files
 out

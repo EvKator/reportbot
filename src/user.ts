@@ -2,7 +2,7 @@
 import {bot} from '../src/telegram_connection';
 import DB from './DB';
 import { Template, ITemplate } from './template';
-import { Report } from './report';
+import { Report, IReport } from './report';
 
 
 
@@ -62,6 +62,10 @@ export class User implements IUser {
         await DB.UpdateUser(this.toJSON());
     }
 
+    generateReport(){
+        return this.reports[this.reports.length - 1].generate();
+    }
+
 
 
     public addTemplate(t: Template){
@@ -72,6 +76,13 @@ export class User implements IUser {
     public addReport(t: Report){
         this._reports.push(t);
         this.update();
+    }
+
+    public async addReportReplacement (replacement:string){
+        this.reports[this.reports.length - 1].replacement.push(replacement);
+        await this.update();
+        console.log(this.reports[this.reports.length - 1].replacement.length);
+        return this.reports[this.reports.length - 1].replacement.length;
     }
 
 

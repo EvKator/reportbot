@@ -4,6 +4,8 @@ import DB from './DB';
 import * as fs from 'fs';
 import * as Path from 'path';
 
+import * as doc from "../src/docx_processor";
+
 export interface ITemplate{
     name: string,
     path: string,
@@ -16,14 +18,11 @@ export class Template implements ITemplate {
     private _placeholdersCount : number;
 
 
-    constructor(placeholdersCount : number, name:string, path?: string){
+    constructor(name:string, path: string, placeholdersCount? : number){
         // super();
         this._name = name;
-        this._placeholdersCount = placeholdersCount;
-        if(typeof(path) == "undefined")
-            this._path = "";
-        else
-            this._path = path;
+        this._path = path;
+        this._placeholdersCount = placeholdersCount? placeholdersCount : doc.tagsCount(path);
     }
     
    
@@ -37,7 +36,7 @@ export class Template implements ITemplate {
 
 
     static fromJSON(jsonT: ITemplate){
-        return new Template(jsonT.placeholdersCount, jsonT.name, jsonT.path);
+        return new Template(jsonT.name, jsonT.path, jsonT.placeholdersCount);
     }
 
     toJSON() : ITemplate {
@@ -73,17 +72,7 @@ export class Template implements ITemplate {
     }
 
     get path(): string{
-        return this._name;
-    }
-
-    set author_id(author_id: number){
-        this._author_id = author_id;
-        console.log("update");
-        // this.update();
-    }
-
-    get author_id(): number{
-        return this._author_id;
+        return this._path;
     }
     //#endregion
 }

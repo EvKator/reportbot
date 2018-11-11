@@ -6,7 +6,7 @@ var Docxtemplater = require('docxtemplater');
 var fs = require('fs');
 var path = require('path');
 
-export function replace (from: string, to: string, matches: { key : string, value: string}[] ): void{
+export function replace (from: string, to: string, matches: { key : string, value: string}[] ){
 
 //Load the docx file as a binary
     var content = fs
@@ -16,6 +16,7 @@ export function replace (from: string, to: string, matches: { key : string, valu
 
     var doc = new Docxtemplater();
     doc.loadZip(zip);
+    
     let o : any = {};
     //set the templateVariables
 
@@ -40,9 +41,35 @@ export function replace (from: string, to: string, matches: { key : string, valu
         console.log(JSON.stringify({error: e}));
         throw error;
     }
-console.log(from + " --- " + to);
     var buf = doc.getZip()
                  .generate({type: 'nodebuffer'});
     // console.log(buf.toString(buf) );
     fs.writeFileSync(to, buf);
+}
+
+export function tagsCount(from: string){
+    var content = fs
+        .readFileSync(path.resolve(from), 'binary');
+
+    var zip = new JSZip(content);
+
+    var doc = new Docxtemplater();
+    doc.loadZip(zip);
+
+    var InspectModule = require("docxtemplater/js/inspect-module");
+    var iModule = InspectModule();
+    doc.attachModule(iModule);
+    doc.render(); // doc.compile can also be used to avoid having runtime errors
+    var tags = iModule.getAllTags();
+    return Object.keys(tags).length;
+}
+
+
+function keysCount(json: any){
+	let count = 0;
+	count += Object.keys(json).length;
+	for(var a in json){
+		count+=keysCount(json[a])
+    }
+	return count;
 }

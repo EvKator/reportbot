@@ -12,7 +12,6 @@ import { Report } from "./report";
 
 
 
-
 bot.onText(/\/start/, async function (msg : TelegramBot.Message , match: RegExpExecArray) {
     
     let user = await User.getSender(msg);
@@ -40,10 +39,12 @@ bot.onText(/\/template(\d)/, async function (msg : TelegramBot.Message , match: 
         await user.saveToDB();
     if(user.templates && user.templates.length > templateNum){
         user.status = match[0];
-        user.addReport(new Report())
+        let template = user.templates[templateNum];
+        user.addReport(new Report("report.docx", "reports/report.docx", template) )
         Menu.sendTextMessage(user, "send your replacers" );
     }
-    Menu.sendMenu(user);
+    else
+        Menu.sendMenu(user);
 });
 
 
@@ -51,26 +52,31 @@ bot.on('message', async function(msg: TelegramBot.Message ){
     let user = await User.getSender(msg);
     user.last_message_id = msg.message_id;
 
-
     const templateNumPattern = /\/template(\d)/g;
 
-
-                if(user.status.search(templateNumPattern) >= 0 ){
-                    let templateNum: number = Number(templateNumPattern.exec(user.status)[1]);
-                    let template = user.templates[templateNum];
-                    
-                    let report =
-                    user.status = 'free';
-                    nMenu.sendNextTaskMenu(user, task.type , text);
-                }
-
-    if(user.status == "crtemplate" && msg.document){
+    if(user.status.search(templateNumPattern) >= 0 ){
+        let templateNum: number = Number(templateNumPattern.exec(user.status)[1]);
+        
+        if(await user.addReportReplacement(msg.text) >= user.templates[templateNum].placeholdersCount){
+            user.status = 'free';
+            Menu.sendTextMessage(user, "Ok, your document is in processing");
+            let reportPath = user.generateReport();
+            bot.sendDocument(user.id, reportPath);
+        }
+        else{
+            Menu.sendTextMessage(user, "Received, continue");
+        }
+            
+    }
+    else if(user.status == "crtemplate" && msg.document){
         console.log(msg.document.file_name);
         let file : TelegramBot.File = await bot.getFile(msg.document.file_id);
         let a: string = await bot.downloadFile(msg.document.file_id, "templates/");
-        let template = new Template(user.id, msg.document.file_name, "templates/" + file.file_path );
+        console.log(a);
+        let template = new Template( msg.document.file_name, a );
         user.addTemplate(template);
         user.status = "free";
+        Menu.sendTextMessage(user, "Ok, i have found " + template.placeholdersCount + " placeholders in your docx");
     }
 });
 
@@ -103,13 +109,23 @@ bot.on('callback_query', async function (msg : TelegramBot.CallbackQuery ) {
                 user.status = 'free';
                 break;
 
+            case '/crreport':
+                Menu.sendCreateReportMenu(user);
+                break;
+
             case '/crtemplate':
                 Menu.sendTextMessage(user, "Send your template");
                 user.status = 'crtemplate';
                 break;
-            case '/templates':
+
+            case '/alltemplates':
                 Menu.sendUserTemplates(user);
                 break;
+
+            case '/mytemplates':
+                Menu.sendUserTemplates(user);
+                break;
+                
             case '/earn_vk_subscribers_task':
             case '/earn_tg_post_view_task':
             case '/earn_tg_subscribers_task':

@@ -14,7 +14,6 @@ export class Menu {
         const text = "What do you want to do?";
         const reply_markup = {
                 "inline_keyboard": [
-                    [{"text": "My templates", "callback_data": "/templates"}],
                     [{"text": "Create report", "callback_data": "/crreport"}],
                     [{"text": "Create template", "callback_data": "/crtemplate"}],
                     [{"text": "Support", "url": "https://telegram.me/u221b", "callback_data": "https://telegram.me/u221b"}]
@@ -22,6 +21,20 @@ export class Menu {
         }
         await Menu._sendMessage(user, text, reply_markup);
     }
+
+    static async sendCreateReportMenu(user: User) {
+        const text = "Which template do you want to use?";
+        const reply_markup = {
+                "inline_keyboard": [
+                    [{"text": "From my collection", "callback_data": "/mytemplates"}],
+                    [{"text": "From the global collection", "callback_data": "/alltemplates"}],
+                    [{"text": "Back", "callback_data": "/menu"}]
+                ]
+        }
+        await Menu._sendMessage(user, text, reply_markup);
+    }
+
+    
 
 
 

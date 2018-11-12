@@ -2,6 +2,7 @@ import {bot} from '../src/telegram_connection';
 
 import {User} from '../src/user';
 import { Template } from './template';
+import DB from './DB';
 
 interface TLReplyMatkup{
     inline_keyboard: [[string, string]
@@ -62,7 +63,29 @@ export class Menu {
         };
         let text = "";
         for(let i = 0; i < user.templates.length; i++)
-            text+= user.templates[i].name + ` ----- /template${i}  \n`
+            text+= user.templates[i].name + ` ----- /template${i}  \n`;
+        // let text = "Баланс: " + user.balance + " руб" + "\n";
+
+        
+        await Menu._sendMessage(user, text ,reply_markup, parse_mode);
+    }
+
+
+    static async sendAllTemplates(user: User) {
+        const parse_mode = 'Markdown';
+        const reply_markup = {
+            "inline_keyboard": [
+                [{"text": "Back", "callback_data": "/menu"}]
+            ]
+        };
+        let text = "";
+        let templates = await DB.GetAllTemplates();
+        console.log(templates);
+        for(let i = 0; i < templates.length; i++){
+            console.log(templates[i]);
+            text+= templates[i].name + ` ----- /gtemplate${i}  \n`;
+        }
+            
         // let text = "Баланс: " + user.balance + " руб" + "\n";
 
         
@@ -102,7 +125,7 @@ export class Menu {
         if(!reply_markup)
             reply_markup = {
                 "inline_keyboard": [
-                    [{"text": "В меню!", "callback_data": "/menu"}]
+                    [{"text": "Back", "callback_data": "/menu"}]
                 ]
             };
         Menu._sendNew(user,text,reply_markup, parse_mode);

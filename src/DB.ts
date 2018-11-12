@@ -46,6 +46,19 @@ export default class DB
     
     ////////////TEMPLATE///////////////////////
 
+    static async GetAllTemplates(){
+        const client = await MongoClient.connect(db_url);
+        const db = client.db(db_name);
+        let templates: Array<any> = new Array();
+        
+        await db.collection('users').find({}).forEach((element:any) => {
+            console.log(element);
+            templates = templates.concat(element.templates);
+        });
+        return templates;
+    }
+
+
     static async GetTemplatesCollection(){
         const client = await MongoClient.connect(db_url);
         const db = client.db(db_name);

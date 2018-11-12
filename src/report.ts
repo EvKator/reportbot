@@ -2,6 +2,8 @@ import { Template, ITemplate } from "./template";
 
 import * as doc from "../src/docx_processor";
 
+
+
 export interface IReport{
     replacement: string[],
     template: ITemplate,
@@ -37,7 +39,7 @@ export class Report implements IReport{
         for(let i = 0; i < this.replacement.length; i++){
             keyValue.push(
                 { 
-                    key :  i.toString(), 
+                    key : this.template.placeholders[i], 
                     value: this.replacement[i]
                 } );
         

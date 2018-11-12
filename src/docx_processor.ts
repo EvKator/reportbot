@@ -47,7 +47,7 @@ export function replace (from: string, to: string, matches: { key : string, valu
     fs.writeFileSync(to, buf);
 }
 
-export function tagsCount(from: string){
+export function tagsCount(from: string): string[]{
     var content = fs
         .readFileSync(path.resolve(from), 'binary');
 
@@ -61,7 +61,7 @@ export function tagsCount(from: string){
     doc.attachModule(iModule);
     doc.render(); // doc.compile can also be used to avoid having runtime errors
     var tags = iModule.getAllTags();
-    return Object.keys(tags).length;
+    return Object.keys(tags);
 }
 
 

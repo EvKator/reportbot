@@ -9,7 +9,7 @@ import {bot} from "../src/telegram_connection";
 import { TelegramBot } from "node-telegram-bot-api";
 import { Template } from "./template";
 import { Report } from "./report";
-
+import DB from "./DB";
 
 
 bot.onText(/\/start/, async function (msg : TelegramBot.Message , match: RegExpExecArray) {
@@ -41,7 +41,24 @@ bot.onText(/\/template(\d)/, async function (msg : TelegramBot.Message , match: 
         user.status = match[0];
         let template = user.templates[templateNum];
         user.addReport(new Report("report.docx", "reports/report.docx", template) )
-        Menu.sendTextMessage(user, "send your replacers" );
+        Menu.sendTextMessage(user, template.placeholders[0] + "?");
+    }
+    else
+        Menu.sendMenu(user);
+});
+
+bot.onText(/\/gtemplate(\d)/, async function (msg : TelegramBot.Message , match: RegExpExecArray) {
+    
+    let user = await User.getSender(msg);
+    let templateNum : number = Number(match[1]) ;
+    let template = (await DB.GetAllTemplates())[templateNum];
+    user.last_message_id = msg.message_id;
+    if(!user.ExistInDB)
+        await user.saveToDB();
+    if(template){
+        user.status = match[0];
+        user.addReport(new Report("report.docx", "reports/report.docx", template) )
+        Menu.sendTextMessage(user, template.placeholders[0] + "?");
     }
     else
         Menu.sendMenu(user);
@@ -54,17 +71,39 @@ bot.on('message', async function(msg: TelegramBot.Message ){
 
     const templateNumPattern = /\/template(\d)/g;
 
+    const gtemplateNumPattern = /\/gtemplate(\d)/g;
+
     if(user.status.search(templateNumPattern) >= 0 ){
         let templateNum: number = Number(templateNumPattern.exec(user.status)[1]);
-        
-        if(await user.addReportReplacement(msg.text) >= user.templates[templateNum].placeholdersCount){
+        let replCount = await user.addReportReplacement(msg.text);
+        if(replCount >= user.templates[templateNum].placeholders.length){
             user.status = 'free';
-            Menu.sendTextMessage(user, "Ok, your document is in processing");
+            await Menu.sendTextMessage(user, "Ok, your document is in processing");
             let reportPath = user.generateReport();
-            bot.sendDocument(user.id, reportPath);
+            let message = await bot.sendDocument(user.id, reportPath);
+            user.last_message_id = message.message_id;
+            await Menu.sendMenu(user);
         }
         else{
-            Menu.sendTextMessage(user, "Received, continue");
+            Menu.sendTextMessage(user, user.templates[templateNum].placeholders[replCount] + "?");
+        }
+            
+    }
+    else if(user.status.search(gtemplateNumPattern) >= 0 ){
+        let templateNum: number = Number(gtemplateNumPattern.exec(user.status)[1]);
+        let template = user.templates[templateNum];
+        let replCount = await user.addReportReplacement(msg.text);
+        console.log(replCount);debugger;
+        if(replCount >= template.placeholders.length){
+            user.status = 'free';
+            await Menu.sendTextMessage(user, "Ok, your document is in processing");
+            let reportPath = user.generateReport();
+            let message = await bot.sendDocument(user.id, reportPath);
+            user.last_message_id = message.message_id;
+            await Menu.sendMenu(user);
+        }
+        else{
+            Menu.sendTextMessage(user, template.placeholders[replCount] + "?");
         }
             
     }
@@ -76,7 +115,7 @@ bot.on('message', async function(msg: TelegramBot.Message ){
         let template = new Template( msg.document.file_name, a );
         user.addTemplate(template);
         user.status = "free";
-        Menu.sendTextMessage(user, "Ok, i have found " + template.placeholdersCount + " placeholders in your docx");
+        Menu.sendTextMessage(user, "Ok, i have found " + template.placeholders + " placeholders in your docx");
     }
 });
 
@@ -119,7 +158,7 @@ bot.on('callback_query', async function (msg : TelegramBot.CallbackQuery ) {
                 break;
 
             case '/alltemplates':
-                Menu.sendUserTemplates(user);
+                Menu.sendAllTemplates(user);
                 break;
 
             case '/mytemplates':

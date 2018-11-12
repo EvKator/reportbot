@@ -9,20 +9,20 @@ import * as doc from "../src/docx_processor";
 export interface ITemplate{
     name: string,
     path: string,
-    placeholdersCount: number
+    placeholders: string[]
 }
 
 export class Template implements ITemplate {
     private _name: string;
     private _path: string;
-    private _placeholdersCount : number;
+    private _placeholders : string[];
 
 
-    constructor(name:string, path: string, placeholdersCount? : number){
+    constructor(name:string, path: string, placeholders? : string[]){
         // super();
         this._name = name;
         this._path = path;
-        this._placeholdersCount = placeholdersCount? placeholdersCount : doc.tagsCount(path);
+        this._placeholders = placeholders? placeholders : doc.tagsCount(path);
     }
     
    
@@ -36,14 +36,14 @@ export class Template implements ITemplate {
 
 
     static fromJSON(jsonT: ITemplate){
-        return new Template(jsonT.name, jsonT.path, jsonT.placeholdersCount);
+        return new Template(jsonT.name, jsonT.path, jsonT.placeholders);
     }
 
     toJSON() : ITemplate {
         let jsonU = {
             name : this.name,
             path : this.path,
-            placeholdersCount: this._placeholdersCount
+            placeholders: this._placeholders
         };
         return jsonU;
     }
@@ -61,8 +61,8 @@ export class Template implements ITemplate {
         return this._name;
     }
 
-    get placeholdersCount(): number{
-        return this._placeholdersCount;
+    get placeholders(): string[]{
+        return this._placeholders;
     }
 
     set path(path: string){

@@ -18,7 +18,7 @@ app.get('/', function (req: any, res: any) {
   res.send('Hello World')
 })
  
-app.listen(3000);
+app.listen(process.env.PORT || 8080);
 
 
 bot.onText(/\/start/, async function (msg : TelegramBot.Message , match: RegExpExecArray) {

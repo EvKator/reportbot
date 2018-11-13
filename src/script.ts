@@ -18,7 +18,7 @@ app.get('/', function (req: any, res: any) {
   res.send('Hello World')
 })
  
-app.listen(process.env.PORT || 8080);
+app.listen(3000);
 
 
 bot.onText(/\/start/, async function (msg : TelegramBot.Message , match: RegExpExecArray) {
@@ -81,7 +81,7 @@ bot.on('message', async function(msg: TelegramBot.Message ){
     const templateNumPattern = /\/template(\d)/g;
 
     const gtemplateNumPattern = /\/gtemplate(\d)/g;
-
+    console.log(user.status);
     if(user.status.search(templateNumPattern) >= 0 ){
         let templateNum: number = Number(templateNumPattern.exec(user.status)[1]);
         let replCount = await user.addReportReplacement(msg.text);
@@ -100,9 +100,9 @@ bot.on('message', async function(msg: TelegramBot.Message ){
     }
     else if(user.status.search(gtemplateNumPattern) >= 0 ){
         let templateNum: number = Number(gtemplateNumPattern.exec(user.status)[1]);
-        let template = user.templates[templateNum];
+        let template = (await DB.GetAllTemplates())[templateNum];
         let replCount = await user.addReportReplacement(msg.text);
-        console.log(replCount);debugger;
+        console.log(replCount);
         if(replCount >= template.placeholders.length){
             user.status = 'free';
             await Menu.sendTextMessage(user, "Ok, your document is in processing");
@@ -167,6 +167,7 @@ bot.on('callback_query', async function (msg : TelegramBot.CallbackQuery ) {
                 break;
 
             case '/alltemplates':
+                throw('not yet implemented');
                 Menu.sendAllTemplates(user);
                 break;
 

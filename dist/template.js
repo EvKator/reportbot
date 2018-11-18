@@ -11,22 +11,23 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const DB_1 = require("./DB");
 const doc = require("./docx_processor");
 class Template {
-    constructor(name, path, faculty, isPrivate, placeholders) {
+    constructor(name, path, faculty, isPrivate, confirmed, placeholders) {
         // super();
         this._name = name;
         this._path = path;
         this._placeholders = placeholders ? placeholders : doc.tagsCount(path);
         this._faculty = faculty;
+        this._confirmed = confirmed;
         this._isPrivate = isPrivate;
     }
     static GetPublicTemplate(faculty, id) {
         return __awaiter(this, void 0, void 0, function* () {
-            let template = (yield DB_1.default.GetPublicTemplates(faculty))[id];
+            let template = (yield DB_1.default.GetPublicTemplates(faculty, 10000))[id];
             return Template.fromJSON(template);
         });
     }
     static fromJSON(jsonT) {
-        return new Template(jsonT.name, jsonT.path, jsonT.faculty, jsonT.isPrivate, jsonT.placeholders);
+        return new Template(jsonT.name, jsonT.path, jsonT.faculty, jsonT.isPrivate, jsonT.confirmed, jsonT.placeholders);
     }
     toJSON() {
         let jsonU = {
@@ -34,7 +35,8 @@ class Template {
             path: this.path,
             placeholders: this._placeholders,
             faculty: this._faculty,
-            isPrivate: this._isPrivate
+            isPrivate: this._isPrivate,
+            confirmed: this._confirmed
         };
         return jsonU;
     }
@@ -65,6 +67,12 @@ class Template {
     }
     get isPrivate() {
         return this._isPrivate;
+    }
+    set confirmed(confirmed) {
+        this._confirmed = confirmed;
+    }
+    get confirmed() {
+        return this._confirmed;
     }
 }
 Template.folderName = "templates";

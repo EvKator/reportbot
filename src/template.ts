@@ -12,7 +12,8 @@ export interface ITemplate{
     path: string,
     placeholders: string[],
     faculty:IFaculty,
-    isPrivate : boolean
+    isPrivate : boolean,
+    confirmed: boolean
 }
 
 export class Template implements ITemplate {
@@ -21,27 +22,28 @@ export class Template implements ITemplate {
     private _placeholders : string[];
     private _faculty:IFaculty;
     private _isPrivate:boolean;
+    private _confirmed: boolean;
 
 
-    constructor(name:string, path: string, faculty : IFaculty, isPrivate: boolean, placeholders? : string[]){
+    constructor(name:string, path: string, faculty : IFaculty, isPrivate: boolean, confirmed: boolean, placeholders? : string[]){
         // super();
         this._name = name;
         this._path = path;
         this._placeholders = placeholders? placeholders : doc.tagsCount(path);
         this._faculty = faculty;
-        
+        this._confirmed = confirmed;
         this._isPrivate =  isPrivate;
     }
 
     public static async GetPublicTemplate(faculty: string, id : number){
-        let template: ITemplate = (await DB.GetPublicTemplates(faculty))[id];
+        let template: ITemplate = (await DB.GetPublicTemplates(faculty, 10000))[id];
 
         return Template.fromJSON(template);
     }
     
    
     static fromJSON(jsonT: ITemplate){
-        return new Template(jsonT.name, jsonT.path, jsonT.faculty, jsonT.isPrivate, jsonT.placeholders);
+        return new Template(jsonT.name, jsonT.path, jsonT.faculty, jsonT.isPrivate, jsonT.confirmed, jsonT.placeholders);
     }
 
     toJSON() : ITemplate {
@@ -50,7 +52,8 @@ export class Template implements ITemplate {
             path : this.path,
             placeholders: this._placeholders,
             faculty: this._faculty,
-            isPrivate: this._isPrivate
+            isPrivate: this._isPrivate,
+            confirmed: this._confirmed
         };
         return jsonU;
     }
@@ -92,6 +95,14 @@ export class Template implements ITemplate {
 
     get isPrivate(): boolean{
         return this._isPrivate;
+    }
+
+    set confirmed(confirmed:boolean){
+        this._confirmed = confirmed;
+    }
+
+    get confirmed(): boolean{
+        return this._confirmed;
     }
     //#endregion
 }

@@ -58,39 +58,49 @@ class DB {
             const client = yield mongodb_1.MongoClient.connect(db_url);
             const db = client.db(db_name);
             let faculties = new Array();
+            let facnames = new Array();
             yield db.collection('users').find().forEach((element) => {
                 element.templates.forEach((element) => {
-                    faculties.push(element.faculty);
+                    facnames.push(element.faculty.name);
                 });
             });
             function onlyUnique(value, index, self) {
                 return self.indexOf(value) === index;
             }
-            return faculties.filter(onlyUnique);
-            ;
+            facnames = facnames.filter(onlyUnique);
+            for (let fac of facnames) {
+                faculties.push({ name: fac });
+            }
+            return faculties;
         });
     }
     static GetFacultyByName(name) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield mongodb_1.MongoClient.connect(db_url);
             const db = client.db(db_name);
-            let faculty = (yield db.collection('users').findOne({ faculty: { name: name } })).faculty;
+            let faculty;
+            yield db.collection('users').find().forEach((element) => {
+                element.templates.forEach((element) => {
+                    if (element.faculty.name == name)
+                        faculty = element.faculty;
+                });
+            });
             return faculty;
         });
     }
     ////////////TEMPLATE///////////////////////
-    static GetPublicTemplates(facultyName) {
+    static GetPublicTemplates(facultyName, balance) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield mongodb_1.MongoClient.connect(db_url);
             const db = client.db(db_name);
             let templates = new Array();
             yield db.collection('users').find().forEach((element) => {
                 element.templates.forEach((template) => {
-                    if (template.isPrivate == false && template.faculty.name == facultyName)
+                    if (template.confirmed == true && template.isPrivate == false && template.faculty.name == facultyName)
                         templates.push(template);
                 });
             });
-            return templates;
+            return templates.slice(0, balance < templates.length ? balance : templates.length);
         });
     }
     static GetTemplatesCollection() {

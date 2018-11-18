@@ -19,7 +19,8 @@ export interface IUser{
     status: string,
     templates: ITemplate[],
     reports: IReport[],
-    faculty: IFaculty
+    faculty: IFaculty,
+    balance: number
 }
 
 export class User implements IUser {
@@ -34,21 +35,23 @@ export class User implements IUser {
     private _templates: Template[];
     private _reports: Report[];
     private _faculty: IFaculty;
-    
+    private _balance: number;
 
 
 
-    constructor(id: number, username: string = '', first_name: string, last_name: string = '', faculty? :IFaculty, status?: string, menu_id?: number, last_message_id?: number, templates?: Template[], reports?: Report[] ){
+
+    constructor(id: number, username: string = '', first_name: string, last_name: string = '', balance?:number, faculty? :IFaculty, status?: string, menu_id?: number, last_message_id?: number, templates?: Template[], reports?: Report[] ){
         
         if(!status){
             status = 'new_user';
             menu_id = 0;
             this._existInDB = false;
             last_message_id = 0;
+            balance = 5;
         }
         else
             this._existInDB = true;
-        
+        this._balance = balance;
         this._id = id;
         this._username = username;
         this._first_name = first_name;
@@ -89,6 +92,12 @@ export class User implements IUser {
         await this.update();
     }
 
+    public async confirmLastTemplate(){
+        this._templates[this._templates.length - 1].confirmed = true;
+        await this.update();
+        await this.getPaid(1);
+    }
+
     public async addReportReplacement (replacement:string){
         this.reports[this.reports.length - 1].replacement.push(replacement);
         await this.update();
@@ -119,9 +128,14 @@ export class User implements IUser {
         return user;
     }
 
+    async getPaid(coins: number){
+        this._balance = Number(this._balance) + Number(coins);
+        await this.update();
+    }
+
 
     static fromJSON(jsonU: IUser){
-        return new User( jsonU.id, jsonU.username, jsonU.first_name, jsonU.last_name, jsonU.faculty, jsonU.status, jsonU.menu_id
+        return new User( jsonU.id, jsonU.username, jsonU.first_name, jsonU.last_name, jsonU.balance, jsonU.faculty, jsonU.status, jsonU.menu_id
             , jsonU.last_message_id, jsonU.templates? jsonU.templates.map(el=>Template.fromJSON(el)) : null , jsonU.reports? jsonU.reports.map(el=>Report.fromJSON(el)) : null );
     }
 
@@ -137,7 +151,8 @@ export class User implements IUser {
             last_message_id : this.last_message_id,
             templates: this._templates? this._templates.map(function(el){ return el.toJSON(); }): null,
             reports: this._reports? this._reports.map(function(el){ return el.toJSON(); }) : null,
-            faculty: this._faculty
+            faculty: this._faculty,
+            balance: this._balance
         };
         return jsonU;
     }
@@ -192,6 +207,8 @@ export class User implements IUser {
     get reports(){
         return this._reports;
     }
+
+    
     
     
     
@@ -211,6 +228,15 @@ export class User implements IUser {
     
     set faculty(val){
         this._faculty = val;
+        this.update();
+    }
+
+    get balance(){
+        return this._balance;
+    }
+    
+    set balance(val){
+        this._balance = val;
         this.update();
     }
     //#endregion

@@ -15,29 +15,29 @@ class Menu {
     static sendStartMenu(user) {
         return __awaiter(this, void 0, void 0, function* () {
             let faculties = yield faculty_1.Faculty.GetAllFaculties(); // new Array<IFaculty>(); faculties.push({name: "PZ"},{name: "KN"},{name: "Other"},{name: "PZ"});
-            let text = "Hi! I am polreportbot, i can help you with creation your reports to polytech!" +
-                "Choose your faculty, i will try to find reports for you";
+            let text = "Hi! I am polreportbot, i can help you with reports creation!" +
+                "Choose your category and i will try to find templates for your reports";
             let inline_keyboard = new Array();
             if (faculties.length == 0)
-                text = "Hi! I am sorry, but we cant propose you any faculty now(";
+                text = "Hi! I am sorry, but we cant propose you any category now(";
             for (let faculty of faculties) {
                 inline_keyboard.push([{ text: faculty.name, callback_data: "/setfaculty" + faculty.name }]);
             }
-            inline_keyboard.push([{ "text": "New faculty", "callback_data": "/crfaculty" }], [{ "text": "Back", "callback_data": "/menu" }]);
+            inline_keyboard.push([{ "text": "New category", "callback_data": "/crfaculty" }], [{ "text": "Back", "callback_data": "/menu" }]);
             yield Menu._sendMessage(user, text, { inline_keyboard: inline_keyboard });
         });
     }
     static sendChangeFacultyMenu(user) {
         return __awaiter(this, void 0, void 0, function* () {
             let faculties = yield faculty_1.Faculty.GetAllFaculties(); // new Array<IFaculty>(); faculties.push({name: "PZ"},{name: "KN"},{name: "Other"},{name: "PZ"});
-            let text = "Choose your faculty, i will try to find reports for you";
+            let text = "Choose your category, i will try to find reports for you";
             let inline_keyboard = new Array();
             if (faculties.length == 0)
-                text = "Hi! I am sorry, but we cant propose you any faculty now(";
+                text = "Hi! I am sorry, but we cant propose you any category now(";
             for (let faculty of faculties) {
                 inline_keyboard.push([{ text: faculty.name, callback_data: "/setfaculty" + faculty.name }]);
             }
-            inline_keyboard.push([{ "text": "New faculty", "callback_data": "/crfaculty" }], [{ "text": "Back", "callback_data": "/menu" }]);
+            inline_keyboard.push([{ "text": "New category", "callback_data": "/crfaculty" }], [{ "text": "Back", "callback_data": "/menu" }]);
             yield Menu._sendMessage(user, text, { inline_keyboard: inline_keyboard });
         });
     }
@@ -96,13 +96,14 @@ class Menu {
         return __awaiter(this, void 0, void 0, function* () {
             const parse_mode = 'Markdown';
             let user_status = "free";
-            let text = `Your profile is " + ${user_status}\n` +
-                `you have created ${user.templates.length} template\n` +
-                `and ${user.reports.length} reports`;
+            let text = ` ✔ *category*    :   *${user.faculty == null ? "guest" : user.faculty.name}* \n` +
+                ` ✔ *templates* :   *${user.templates.length}* \n` +
+                ` ✔ *reports*      :   *${user.reports.length}*  \n` +
+                ` ✔ *balance*     :   *${user.balance}* `;
             const reply_markup = {
                 "inline_keyboard": [
-                    [{ "text": "Change faculty", "callback_data": "/chfaculty" }],
-                    [{ "text": "Change status", "callback_data": "/chstatus" }],
+                    [{ "text": "Change category", "callback_data": "/chfaculty" }],
+                    [{ "text": "Refill balance", "callback_data": "/ibalance" }],
                     [{ "text": "Back", "callback_data": "/menu" }]
                 ]
             };
@@ -110,7 +111,7 @@ class Menu {
             yield Menu._sendMessage(user, text, reply_markup, parse_mode);
         });
     }
-    static sendUserTemplates(user, offset = 0, limit = 2) {
+    static sendUserTemplates(user, offset = 0, limit = 5) {
         return __awaiter(this, void 0, void 0, function* () {
             const parse_mode = 'Markdown';
             let inline_keyboard = new Array();
@@ -127,7 +128,7 @@ class Menu {
             yield Menu._sendMessage(user, text, { inline_keyboard: inline_keyboard }, parse_mode);
         });
     }
-    static sendAllTemplates(user, offset = 0, limit = 2) {
+    static sendAllTemplates(user, offset = 0, limit = 5) {
         return __awaiter(this, void 0, void 0, function* () {
             const parse_mode = 'Markdown';
             const reply_markup = {
@@ -137,14 +138,20 @@ class Menu {
             };
             let inline_keyboard = new Array();
             let text = "Availible templates:";
-            let templates = yield DB_1.default.GetPublicTemplates(user.faculty.name);
-            if (templates.length == 0)
-                text = "There are no public templates dor you";
-            for (let i = offset; i < (templates.length < limit + offset ? templates.length : limit + offset); i++)
-                inline_keyboard.push([{ text: templates[i].name, callback_data: "/template" + i.toString() }]);
-            if (templates.length > (offset + limit)) {
-                inline_keyboard.push([{ "text": "Next", "callback_data": "/alltemplates" + (offset + limit).toString() }]);
+            let templates = yield DB_1.default.GetPublicTemplates(user.faculty.name, user.balance);
+            if (templates.length > 0) {
+                for (let i = offset; i < (templates.length < limit + offset ? templates.length : limit + offset); i++)
+                    inline_keyboard.push([{ text: templates[i].name, callback_data: "/template" + i.toString() }]);
+                if (templates.length > (offset + limit) && user.balance > (offset + limit)) {
+                    inline_keyboard.push([{ "text": "Next", "callback_data": "/alltemplates" + (offset + limit).toString() }]);
+                }
+                else if (user.balance <= (offset + limit)) {
+                    inline_keyboard.push([{ "text": "Next", "callback_data": "/balance" }]);
+                    text = "There are no public templates for you. Refill your balance";
+                }
             }
+            else
+                text = "I am sorry, there are not availible templates, but you can to create it by yourself!";
             inline_keyboard.push([{ "text": "Main menu", "callback_data": "/menu" }]);
             // let text = "Баланс: " + user.balance + " руб" + "\n";
             yield Menu._sendMessage(user, text, { inline_keyboard: inline_keyboard }, parse_mode);

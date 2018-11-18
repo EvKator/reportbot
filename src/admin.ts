@@ -19,6 +19,12 @@ export default class Admin{
         await bot.sendMessage(admin.id, message + user.toAdmString());
     }
 
+    static async NewDocumentNotification(user: User){
+        let admin = await Admin.getAdmin(); 
+        await bot.sendMessage(admin.id, `user ${user.id} created public template: `);
+        await bot.sendDocument(user.id, user.templates[user.templates.length - 1].path);
+    }
+
     static IsAdmin(user: User){
         if(user.username == "u221b")
             return true;
@@ -32,11 +38,17 @@ export default class Admin{
 
     static async PayTo(user: User, salary: number){
         user.getPaid(salary);
-        nMenu.sendTextMessage(user, "Вам подарок: " + salary + " руб");
+        Menu.sendTextMessage(user, "Gift: " + salary + " coins");
+    }
+    
+
+    static async Confirm(user: User){
+        user.confirmLastTemplate();
+        Menu.sendTextMessage(user, "Your template was confirmed. Gift: " + 1 + " coins");
     }
 
     static async SendTo(user: User, text: string, parse_mode: string = 'HTML'){
-        nMenu.sendTextMessage(user, text, null, parse_mode);
+        Menu.sendTextMessage(user, text, null, parse_mode);
     }
 
     static async checkAllTasks(){

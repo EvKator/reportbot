@@ -12,16 +12,18 @@ const DB_1 = require("./DB");
 const template_1 = require("./template");
 const report_1 = require("./report");
 class User {
-    constructor(id, username = '', first_name, last_name = '', faculty, status, menu_id, last_message_id, templates, reports) {
+    constructor(id, username = '', first_name, last_name = '', balance, faculty, status, menu_id, last_message_id, templates, reports) {
         this._existInDB = false;
         if (!status) {
             status = 'new_user';
             menu_id = 0;
             this._existInDB = false;
             last_message_id = 0;
+            balance = 5;
         }
         else
             this._existInDB = true;
+        this._balance = balance;
         this._id = id;
         this._username = username;
         this._first_name = first_name;
@@ -59,6 +61,13 @@ class User {
             yield this.update();
         });
     }
+    confirmLastTemplate() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this._templates[this._templates.length - 1].confirmed = true;
+            yield this.update();
+            yield this.getPaid(1);
+        });
+    }
     addReportReplacement(replacement) {
         return __awaiter(this, void 0, void 0, function* () {
             this.reports[this.reports.length - 1].replacement.push(replacement);
@@ -92,8 +101,14 @@ class User {
             return user;
         });
     }
+    getPaid(coins) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this._balance = Number(this._balance) + Number(coins);
+            yield this.update();
+        });
+    }
     static fromJSON(jsonU) {
-        return new User(jsonU.id, jsonU.username, jsonU.first_name, jsonU.last_name, jsonU.faculty, jsonU.status, jsonU.menu_id, jsonU.last_message_id, jsonU.templates ? jsonU.templates.map(el => template_1.Template.fromJSON(el)) : null, jsonU.reports ? jsonU.reports.map(el => report_1.Report.fromJSON(el)) : null);
+        return new User(jsonU.id, jsonU.username, jsonU.first_name, jsonU.last_name, jsonU.balance, jsonU.faculty, jsonU.status, jsonU.menu_id, jsonU.last_message_id, jsonU.templates ? jsonU.templates.map(el => template_1.Template.fromJSON(el)) : null, jsonU.reports ? jsonU.reports.map(el => report_1.Report.fromJSON(el)) : null);
     }
     toJSON() {
         let jsonU = {
@@ -106,7 +121,8 @@ class User {
             last_message_id: this.last_message_id,
             templates: this._templates ? this._templates.map(function (el) { return el.toJSON(); }) : null,
             reports: this._reports ? this._reports.map(function (el) { return el.toJSON(); }) : null,
-            faculty: this._faculty
+            faculty: this._faculty,
+            balance: this._balance
         };
         return jsonU;
     }
@@ -161,6 +177,13 @@ class User {
     }
     set faculty(val) {
         this._faculty = val;
+        this.update();
+    }
+    get balance() {
+        return this._balance;
+    }
+    set balance(val) {
+        this._balance = val;
         this.update();
     }
 }

@@ -17,6 +17,7 @@ const telegram_connection_1 = require("./telegram_connection");
 const template_1 = require("./template");
 const report_1 = require("./report");
 const faculty_1 = require("./faculty");
+const admin_1 = require("./admin");
 var express = require('express');
 var app = express();
 app.get('/', function (req, res) {
@@ -30,13 +31,77 @@ telegram_connection_1.bot.onText(/\/start/, function (msg, match) {
         if (!user.ExistInDB) {
             yield user.saveToDB();
             var greeting = "Hi!";
+            yield nmenu_1.Menu.sendStartMenu(user);
+            admin_1.default.SendInf(user, "New user:\n");
             // await Menu.sendTextMessage(user, greeting);
         }
         else {
-            const greeting = "Hi! We are already familiar ";
-            // await Menu.sendTextMessage(user, greeting);
+            let greeting = "Hi! We are already familiar ";
+            yield nmenu_1.Menu.sendTextMessage(user, greeting);
         }
-        yield nmenu_1.Menu.sendStartMenu(user);
+    });
+});
+telegram_connection_1.bot.onText(/\/sendtoall (.*)/, function (msg, match) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let user = yield user_1.User.getSender(msg);
+        if (yield admin_1.default.IsAdmin(user)) {
+            yield admin_1.default.SendToAll(match[1]);
+            nmenu_1.Menu.sendTextMessage(user, 'Success');
+        }
+        user.last_message_id = msg.message_id;
+    });
+});
+telegram_connection_1.bot.onText(/\/sendto (\d+) (.*)/, function (msg, match) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let user = yield user_1.User.getSender(msg);
+        if (yield admin_1.default.IsAdmin(user)) {
+            let userDestination = yield user_1.User.fromDB(Number(match[1]));
+            yield admin_1.default.SendTo(userDestination, match[2]);
+            nmenu_1.Menu.sendTextMessage(user, 'Success');
+        }
+        user.last_message_id = msg.message_id;
+    });
+});
+telegram_connection_1.bot.onText(/\/payto (\d+) (\d+)/, function (msg, match) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let user = yield user_1.User.getSender(msg);
+        if (yield admin_1.default.IsAdmin(user)) {
+            let userDestination = yield user_1.User.fromDB(Number(match[1]));
+            yield admin_1.default.PayTo(userDestination, match[2]);
+            nmenu_1.Menu.sendTextMessage(user, 'Success');
+        }
+        user.last_message_id = msg.message_id;
+    });
+});
+telegram_connection_1.bot.onText(/\/confirm (\d+)(.*)/, function (msg, match) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let user = yield user_1.User.getSender(msg);
+        if (yield admin_1.default.IsAdmin(user)) {
+            let userDestination = yield user_1.User.fromDB(Number(match[1]));
+            yield admin_1.default.Confirm(userDestination);
+            nmenu_1.Menu.sendTextMessage(user, 'Success');
+        }
+        user.last_message_id = msg.message_id;
+    });
+});
+telegram_connection_1.bot.onText(/\/paytome (\d+)/, function (msg, match) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let user = yield user_1.User.getSender(msg);
+        if (yield admin_1.default.IsAdmin(user)) {
+            yield admin_1.default.PayTo(user, match[1]);
+            nmenu_1.Menu.sendTextMessage(user, 'Success');
+        }
+        user.last_message_id = msg.message_id;
+    });
+});
+telegram_connection_1.bot.onText(/\/getuserinf (\d+)/, function (msg, match) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let user = yield user_1.User.getSender(msg);
+        if (yield admin_1.default.IsAdmin(user)) {
+            let user = yield user_1.User.fromDB(Number(match[1]));
+            yield admin_1.default.SendInf(user, "");
+        }
+        user.last_message_id = msg.message_id;
     });
 });
 telegram_connection_1.bot.on('message', function (msg) {
@@ -81,7 +146,9 @@ telegram_connection_1.bot.on('message', function (msg) {
         else if (user.status == "/crtemplate" && msg.document) {
             let file = yield telegram_connection_1.bot.getFile(msg.document.file_id);
             let a = yield telegram_connection_1.bot.downloadFile(msg.document.file_id, "templates/");
-            let template = new template_1.Template(msg.document.file_name, a, user.faculty, true);
+            const docnamePattern = /(.*)\.docx/g;
+            let docname = docnamePattern.exec(msg.document.file_name)[1];
+            let template = new template_1.Template(docname, a, user.faculty, true, false);
             template.faculty = user.faculty;
             user.addTemplate(template);
             user.status = "free";
@@ -118,6 +185,11 @@ telegram_connection_1.bot.on('callback_query', function (msg) {
                     nmenu_1.Menu.sendStats(user);
                     user.status = 'free';
                     break;
+                case '/ibalance':
+                    admin_1.default.SendInf(user, 'wants to refill balance');
+                    nmenu_1.Menu.sendTextMessage(user, "Request has been sent");
+                    user.status = 'free';
+                    break;
                 case '/menu':
                     nmenu_1.Menu.sendMenu(user);
                     user.status = 'free';
@@ -129,12 +201,18 @@ telegram_connection_1.bot.on('callback_query', function (msg) {
                     nmenu_1.Menu.sendTextMessage(user, "Send your template");
                     user.status = '/crtemplate';
                     break;
+                case '/balance':
+                    telegram_connection_1.bot.answerCallbackQuery(msg.id, "To look more, refill your balance", true);
+                    break;
                 case '/crfaculty':
-                    nmenu_1.Menu.sendTextMessage(user, "What is the name of your faculty?");
+                    nmenu_1.Menu.sendTextMessage(user, "What is the name of your category?");
                     user.status = '/crfaculty';
                     break;
                 case '/alltemplates':
-                    nmenu_1.Menu.sendAllTemplates(user);
+                    if (user.faculty != null)
+                        nmenu_1.Menu.sendAllTemplates(user);
+                    else
+                        nmenu_1.Menu.sendTextMessage(user, `First choose your category`);
                     break;
                 case '/mytemplates':
                     nmenu_1.Menu.sendUserTemplates(user);
@@ -149,6 +227,7 @@ telegram_connection_1.bot.on('callback_query', function (msg) {
                     let template = user.templates[user.templates.length - 1];
                     yield user.setTemplatePrivacy(false);
                     nmenu_1.Menu.sendTextMessage(user, `Template ${template.name} was successfully created`);
+                    admin_1.default.NewDocumentNotification(user);
                     user.status = 'free';
                     break;
                 case '/setprivtemplate':
@@ -165,6 +244,7 @@ telegram_connection_1.bot.on('callback_query', function (msg) {
                 default:
                     const facultyPattern = /\/setfaculty(.*)/g;
                     const reportPattern = /\/mytemplates(.*)/g;
+                    const areportPattern = /\/alltemplates(.*)/g;
                     const useTemplatePattern = /\/template(.*)/g;
                     const useGlobTemplatePattern = /\/alltemplate(.*)/g;
                     if (msg.data.search(facultyPattern) >= 0) {
@@ -175,6 +255,10 @@ telegram_connection_1.bot.on('callback_query', function (msg) {
                     else if (msg.data.search(reportPattern) >= 0) {
                         let offset = Number(reportPattern.exec(msg.data)[1]);
                         nmenu_1.Menu.sendUserTemplates(user, offset);
+                    }
+                    else if (msg.data.search(areportPattern) >= 0) {
+                        let offset = Number(areportPattern.exec(msg.data)[1]);
+                        nmenu_1.Menu.sendAllTemplates(user, offset);
                     }
                     else if (msg.data.search(useTemplatePattern) >= 0) {
                         let templateNum = Number(useTemplatePattern.exec(msg.data)[1]);

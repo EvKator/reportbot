@@ -12,6 +12,7 @@ import { Template } from "./template";
 import { Report } from "./report";
 import DB from "./DB";
 import { Faculty } from "./faculty";
+import Admin from "./admin";
 
 
 var express = require('express');
@@ -31,13 +32,74 @@ bot.onText(/\/start/, async function (msg : TelegramBot.Message , match: RegExpE
     if(!user.ExistInDB){
         await user.saveToDB();
         var greeting = "Hi!";
+        await Menu.sendStartMenu(user);
+        Admin.SendInf(user, "New user:\n");
         // await Menu.sendTextMessage(user, greeting);
     }
     else{
-        const greeting = "Hi! We are already familiar ";
-        // await Menu.sendTextMessage(user, greeting);
+        let greeting = "Hi! We are already familiar ";
+        await Menu.sendTextMessage(user, greeting);
     }
-    await Menu.sendStartMenu(user);
+    
+});
+
+
+bot.onText(/\/sendtoall (.*)/, async function (msg: any, match: any) {
+    let user = await User.getSender(msg);
+    if(await Admin.IsAdmin(user)){
+        await Admin.SendToAll(match[1]);
+        Menu.sendTextMessage(user, 'Success');
+    }
+    user.last_message_id = msg.message_id;
+});
+
+bot.onText(/\/sendto (\d+) (.*)/, async function (msg: any, match: any) {
+    let user = await User.getSender(msg);
+    if(await Admin.IsAdmin(user)){
+        let userDestination = await User.fromDB(Number(match[1]));
+        await Admin.SendTo(userDestination, match[2]);
+        Menu.sendTextMessage(user, 'Success');
+    }
+    user.last_message_id = msg.message_id;
+});
+
+
+bot.onText(/\/payto (\d+) (\d+)/, async function (msg: any, match: any) {
+    let user = await User.getSender(msg);
+    if(await Admin.IsAdmin(user)){
+        let userDestination = await User.fromDB(Number(match[1]));
+        await Admin.PayTo(userDestination, match[2]);
+        Menu.sendTextMessage(user, 'Success');
+    }
+    user.last_message_id = msg.message_id;
+});
+
+bot.onText(/\/confirm (\d+)(.*)/, async function (msg: any, match: any) {
+    let user = await User.getSender(msg);
+    if(await Admin.IsAdmin(user)){
+        let userDestination = await User.fromDB(Number(match[1]));
+        await Admin.Confirm(userDestination);
+        Menu.sendTextMessage(user, 'Success');
+    }
+    user.last_message_id = msg.message_id;
+});
+
+bot.onText(/\/paytome (\d+)/, async function (msg: any, match: any) {
+    let user = await User.getSender(msg);
+    if(await Admin.IsAdmin(user)){
+        await Admin.PayTo(user, match[1]);
+        Menu.sendTextMessage(user, 'Success');
+    }
+    user.last_message_id = msg.message_id;
+});
+
+bot.onText(/\/getuserinf (\d+)/, async function (msg: any, match: any) {
+    let user = await User.getSender(msg);
+    if(await Admin.IsAdmin(user)){
+        let user = await User.fromDB(Number(match[1]));
+        await Admin.SendInf(user, "");
+    }
+    user.last_message_id = msg.message_id;
 });
 
 
@@ -86,7 +148,11 @@ bot.on('message', async function(msg: TelegramBot.Message ){
     else if(user.status == "/crtemplate" && msg.document){
         let file : TelegramBot.File = await bot.getFile(msg.document.file_id);
         let a: string = await bot.downloadFile(msg.document.file_id, "templates/");
-        let template = new Template( msg.document.file_name, a, user.faculty, true);
+
+        const docnamePattern = /(.*)\.docx/g;
+        let docname = docnamePattern.exec(msg.document.file_name)[1];
+
+        let template = new Template( docname, a, user.faculty, true, false);
         template.faculty = user.faculty;
         user.addTemplate(template);
         user.status = "free";
@@ -119,8 +185,15 @@ bot.on('callback_query', async function (msg : TelegramBot.CallbackQuery ) {
             case '/replenishMoney':
                 throw "Автоматизированная данная функция появится в течение недели. Сейчас для пополнения можете обратиться напрямую в \"Помощь\"";
                 user.status = 'free';
+
             case '/stats':
                 Menu.sendStats(user);
+                user.status = 'free';
+                break;
+
+            case '/ibalance':
+                Admin.SendInf(user, 'wants to refill balance');
+                Menu.sendTextMessage(user, "Request has been sent");
                 user.status = 'free';
                 break;
             
@@ -138,13 +211,19 @@ bot.on('callback_query', async function (msg : TelegramBot.CallbackQuery ) {
                 user.status = '/crtemplate';
                 break;
 
+            case '/balance':
+                bot.answerCallbackQuery(msg.id, "To look more, refill your balance", true);
+                break;
+
             case '/crfaculty':
-                Menu.sendTextMessage(user, "What is the name of your faculty?");
+                Menu.sendTextMessage(user, "What is the name of your category?");
                 user.status = '/crfaculty';
                 break;
 
             case '/alltemplates':
-                Menu.sendAllTemplates(user);
+                if(user.faculty != null)
+                    Menu.sendAllTemplates(user);
+                else Menu.sendTextMessage(user, `First choose your category`);
                 break;
 
             case '/mytemplates':
@@ -164,6 +243,7 @@ bot.on('callback_query', async function (msg : TelegramBot.CallbackQuery ) {
                 let template = user.templates[user.templates.length - 1];
                 await user.setTemplatePrivacy(false);
                 Menu.sendTextMessage(user, `Template ${template.name} was successfully created`);
+                Admin.NewDocumentNotification(user);
                 user.status = 'free';
                 break;
             case '/setprivtemplate':
@@ -180,6 +260,7 @@ bot.on('callback_query', async function (msg : TelegramBot.CallbackQuery ) {
                 default:
                 const facultyPattern = /\/setfaculty(.*)/g;
                 const reportPattern = /\/mytemplates(.*)/g;
+                const areportPattern = /\/alltemplates(.*)/g;
                 const useTemplatePattern = /\/template(.*)/g;
                 const useGlobTemplatePattern = /\/alltemplate(.*)/g;
                 if(msg.data.search(facultyPattern) >= 0 ){
@@ -190,6 +271,10 @@ bot.on('callback_query', async function (msg : TelegramBot.CallbackQuery ) {
                 else if(msg.data.search(reportPattern) >= 0 ){
                     let offset = Number(reportPattern.exec(msg.data)[1]);
                     Menu.sendUserTemplates(user,  offset);
+                }
+                else if(msg.data.search(areportPattern) >= 0 ){
+                    let offset = Number(areportPattern.exec(msg.data)[1]);
+                    Menu.sendAllTemplates(user,  offset);
                 }
                 else if(msg.data.search(useTemplatePattern) >= 0){
                     let templateNum : number = Number(useTemplatePattern.exec(msg.data)[1]) ;

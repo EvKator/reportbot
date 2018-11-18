@@ -1,24 +1,59 @@
-import {bot} from '../src/telegram_connection';
+import {bot} from './telegram_connection';
 
-import {User} from '../src/user';
+import {User} from './user';
 import { Template } from './template';
 import DB from './DB';
+import { IFaculty, Faculty } from './faculty';
 
 interface TLReplyMatkup{
     inline_keyboard: [[string, string]
     ]
 }
 
+
 export class Menu {
+    static async sendStartMenu(user: User) {
+
+        let faculties = await Faculty.GetAllFaculties();// new Array<IFaculty>(); faculties.push({name: "PZ"},{name: "KN"},{name: "Other"},{name: "PZ"});
+        let text = "Hi! I am polreportbot, i can help you with creation your reports to polytech!" + 
+                    "Choose your faculty, i will try to find reports for you";
+        let inline_keyboard = new Array<
+            [{text: string, callback_data : string}]>();
+            
+        if(faculties.length == 0)
+            text = "Hi! I am sorry, but we cant propose you any faculty now(";
+        for(let faculty of faculties){
+            inline_keyboard.push([{text: faculty.name, callback_data: "/setfaculty" + faculty.name}]);
+        }
+        inline_keyboard.push([{"text": "New faculty", "callback_data": "/crfaculty"}], [{"text": "Back", "callback_data": "/menu"}]);
+        await Menu._sendMessage(user, text, {inline_keyboard:inline_keyboard});
+    }
+
+    static async sendChangeFacultyMenu(user: User) {
+
+        let faculties = await Faculty.GetAllFaculties();// new Array<IFaculty>(); faculties.push({name: "PZ"},{name: "KN"},{name: "Other"},{name: "PZ"});
+        let text = "Choose your faculty, i will try to find reports for you";
+        let inline_keyboard = new Array<
+            [{text: string, callback_data : string}]>();
+            
+        if(faculties.length == 0)
+            text = "Hi! I am sorry, but we cant propose you any faculty now(";
+        for(let faculty of faculties){
+            inline_keyboard.push([{text: faculty.name, callback_data: "/setfaculty" + faculty.name}]);
+        }
+        inline_keyboard.push([{"text": "New faculty", "callback_data": "/crfaculty"}], [{"text": "Back", "callback_data": "/menu"}]);
+        await Menu._sendMessage(user, text, {inline_keyboard:inline_keyboard});
+    }
 
     static async sendMenu(user: User) {
         const text = "What do you want to do?";
         const reply_markup = {
-                "inline_keyboard": [
-                    [{"text": "Create report", "callback_data": "/crreport"}],
-                    [{"text": "Create template", "callback_data": "/crtemplate"}],
-                    [{"text": "Support", "url": "https://telegram.me/u221b", "callback_data": "https://telegram.me/u221b"}]
-                ]
+            "inline_keyboard": [
+                [{"text": "Create report", "callback_data": "/crreport"}],
+                [{"text": "Create template", "callback_data": "/crtemplate"}],
+                [{"text": "Profile", "callback_data": "/profile"}],
+                [{"text": "Support", "url": "https://telegram.me/u221b", "callback_data": "https://telegram.me/u221b"}]
+            ]
         }
         await Menu._sendMessage(user, text, reply_markup);
     }
@@ -29,41 +64,50 @@ export class Menu {
                 "inline_keyboard": [
                     [{"text": "From my collection", "callback_data": "/mytemplates"}],
                     [{"text": "From the global collection", "callback_data": "/alltemplates"}],
-                    [{"text": "Back", "callback_data": "/menu"}]
+                    [{"text": "Back to menu", "callback_data": "/menu"}]
                 ]
         }
         await Menu._sendMessage(user, text, reply_markup);
     }
 
-    
+    static async sendChangeStatusMenu(user: User) {
+        const text = "Changing status now is unavailible";
+        const reply_markup = {
+                "inline_keyboard": [
+                    [{"text": "Back to menu", "callback_data": "/menu"}]
+                ]
+        }
+        await Menu._sendMessage(user, text, reply_markup);
+    }
 
-
-
-
-    static async sendStats(user: User) {
+    static async sendCreateTemplateMenu(user: User, text: string) {
         const parse_mode = 'Markdown';
         const reply_markup = {
             "inline_keyboard": [
-                [{"text": "Back", "callback_data": "/menu"}]
+                [{"text": "Public", "callback_data": "/setpubtemplate"}],
+                [{"text": "Private", "callback_data": "/setprivtemplate"}]
             ]
         };
         // let text = "Баланс: " + user.balance + " руб" + "\n";
 
         
-        await Menu._sendMessage(user, " ",reply_markup, parse_mode);
+        await Menu._sendMessage(user, text ,reply_markup, parse_mode);
     }
 
-
-    static async sendUserTemplates(user: User) {
+    static async sendStats(user: User) {
         const parse_mode = 'Markdown';
+        let user_status = "free";
+        let text = `Your profile is " + ${user_status}\n` +
+            `you have created ${user.templates.length} template\n` +
+            `and ${user.reports.length} reports`;
+        
         const reply_markup = {
             "inline_keyboard": [
+                [{"text": "Change faculty", "callback_data": "/chfaculty"}],
+                [{"text": "Change status", "callback_data": "/chstatus"}],
                 [{"text": "Back", "callback_data": "/menu"}]
             ]
         };
-        let text = "";
-        for(let i = 0; i < user.templates.length; i++)
-            text+= user.templates[i].name + ` ----- /template${i}  \n`;
         // let text = "Баланс: " + user.balance + " руб" + "\n";
 
         
@@ -71,25 +115,53 @@ export class Menu {
     }
 
 
-    static async sendAllTemplates(user: User) {
+    static async sendUserTemplates(user: User, offset: number = 0, limit: number = 2) {
+        const parse_mode = 'Markdown';
+        let inline_keyboard = new Array<
+        [{text: string, callback_data : string}]>();
+
+        let text = "Availible templates:";
+        if(user.templates.length == 0)
+            text = "You have not created templates yet. Lets change it!";
+        for(let i = offset; i < (user.templates.length < limit + offset? user.templates.length : limit + offset); i++)
+            inline_keyboard.push([{text: user.templates[i].name, callback_data: "/template" + i.toString()}]);
+        if(user.templates.length > (offset + limit)){
+            inline_keyboard.push([{"text": "Next", "callback_data": "/mytemplates" + (offset + limit).toString()}]);
+        }
+        inline_keyboard.push([{"text": "Main menu", "callback_data": "/menu"}]);
+        // let text = "Баланс: " + user.balance + " руб" + "\n";
+
+        await Menu._sendMessage(user, text ,{inline_keyboard:inline_keyboard}, parse_mode);
+    }
+
+
+    static async sendAllTemplates(user: User, offset: number = 0, limit: number = 2) {
         const parse_mode = 'Markdown';
         const reply_markup = {
             "inline_keyboard": [
                 [{"text": "Back", "callback_data": "/menu"}]
             ]
         };
-        let text = "";
-        let templates = await DB.GetAllTemplates();
-        console.log(templates);
-        for(let i = 0; i < templates.length; i++){
-            console.log(templates[i]);
-            text+= templates[i].name + ` ----- /gtemplate${i}  \n`;
+
+        let inline_keyboard = new Array<
+        [{text: string, callback_data : string}]>();
+
+        let text = "Availible templates:";
+
+        let templates = await DB.GetPublicTemplates(user.faculty.name);
+        if(templates.length == 0)
+            text = "There are no public templates dor you";
+        for(let i = offset; i < (templates.length < limit + offset? templates.length : limit + offset); i++)
+            inline_keyboard.push([{text: templates[i].name, callback_data: "/template" + i.toString()}]);
+        if(templates.length > (offset + limit)){
+            inline_keyboard.push([{"text": "Next", "callback_data": "/alltemplates" + (offset + limit).toString()}]);
         }
+        inline_keyboard.push([{"text": "Main menu", "callback_data": "/menu"}]);
             
         // let text = "Баланс: " + user.balance + " руб" + "\n";
 
         
-        await Menu._sendMessage(user, text ,reply_markup, parse_mode);
+        await Menu._sendMessage(user, text ,{inline_keyboard:inline_keyboard}, parse_mode);
     }
 
     
@@ -125,7 +197,7 @@ export class Menu {
         if(!reply_markup)
             reply_markup = {
                 "inline_keyboard": [
-                    [{"text": "Back", "callback_data": "/menu"}]
+                    [{"text": "Menu", "callback_data": "/menu"}]
                 ]
             };
         Menu._sendNew(user,text,reply_markup, parse_mode);

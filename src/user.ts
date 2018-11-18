@@ -1,8 +1,9 @@
 
-import {bot} from '../src/telegram_connection';
+import {bot} from './telegram_connection';
 import DB from './DB';
 import { Template, ITemplate } from './template';
 import { Report, IReport } from './report';
+import { IFaculty } from './faculty';
 
 
 
@@ -18,6 +19,7 @@ export interface IUser{
     status: string,
     templates: ITemplate[],
     reports: IReport[],
+    faculty: IFaculty
 }
 
 export class User implements IUser {
@@ -31,10 +33,12 @@ export class User implements IUser {
     private _status: string;
     private _templates: Template[];
     private _reports: Report[];
+    private _faculty: IFaculty;
+    
 
 
 
-    constructor(id: number, username: string = '', first_name: string, last_name: string = '', status?: string, menu_id?: number, last_message_id?: number, templates?: Template[], reports?: Report[]){
+    constructor(id: number, username: string = '', first_name: string, last_name: string = '', faculty? :IFaculty, status?: string, menu_id?: number, last_message_id?: number, templates?: Template[], reports?: Report[] ){
         
         if(!status){
             status = 'new_user';
@@ -54,6 +58,8 @@ export class User implements IUser {
         this._last_message_id = last_message_id;
         this._templates = templates?templates : new Array<Template>();
         this._reports = reports? reports : new Array<Report>();
+        this._faculty = faculty;
+        
     }
 
     
@@ -68,14 +74,19 @@ export class User implements IUser {
 
 
 
-    public addTemplate(t: Template){
+    public async addTemplate(t: Template){
         this._templates.push(t);
-        this.update();
+        await this.update();
     }
 
-    public addReport(t: Report){
+    public async setTemplatePrivacy(isPrivate: boolean){
+        this._templates[this._templates.length - 1].isPrivate = isPrivate;
+        await this.update();
+    }
+
+    public async addReport(t: Report){
         this._reports.push(t);
-        this.update();
+        await this.update();
     }
 
     public async addReportReplacement (replacement:string){
@@ -110,7 +121,7 @@ export class User implements IUser {
 
 
     static fromJSON(jsonU: IUser){
-        return new User( jsonU.id, jsonU.username, jsonU.first_name, jsonU.last_name, jsonU.status, jsonU.menu_id
+        return new User( jsonU.id, jsonU.username, jsonU.first_name, jsonU.last_name, jsonU.faculty, jsonU.status, jsonU.menu_id
             , jsonU.last_message_id, jsonU.templates? jsonU.templates.map(el=>Template.fromJSON(el)) : null , jsonU.reports? jsonU.reports.map(el=>Report.fromJSON(el)) : null );
     }
 
@@ -125,7 +136,8 @@ export class User implements IUser {
             menu_id : this.menu_id,
             last_message_id : this.last_message_id,
             templates: this._templates? this._templates.map(function(el){ return el.toJSON(); }): null,
-            reports: this._reports? this._reports.map(function(el){ return el.toJSON(); }) : null
+            reports: this._reports? this._reports.map(function(el){ return el.toJSON(); }) : null,
+            faculty: this._faculty
         };
         return jsonU;
     }
@@ -189,6 +201,16 @@ export class User implements IUser {
     
     set last_message_id(val){
         this._last_message_id = val;
+        this.update();
+    }
+
+
+    get faculty(){
+        return this._faculty;
+    }
+    
+    set faculty(val){
+        this._faculty = val;
         this.update();
     }
     //#endregion

@@ -1,24 +1,27 @@
-import * as doc from "../src/docx_processor";
+
+import doc = require("./docx_processor");
 // import User from './user';
-import {User}  from "../src/user";
-import {Menu} from "../src/nmenu"
+import {User}  from "./user";
+import {Menu} from "./nmenu"
 
 console.log("XYUU1123123123123");
 
-import {bot} from "../src/telegram_connection";
-import { TelegramBot } from "node-telegram-bot-api";
+import {bot} from "./telegram_connection";
+import * as TelegramBot from "node-telegram-bot-api";
 import { Template } from "./template";
 import { Report } from "./report";
 import DB from "./DB";
+import { Faculty } from "./faculty";
 
-var express = require('express')
-var app = express()
+
+var express = require('express');
+var app = express();
  
 app.get('/', function (req: any, res: any) {
   res.send('Hello World')
 })
  
-app.listen(3000);
+app.listen(process.env.PORT || 3000);
 
 
 bot.onText(/\/start/, async function (msg : TelegramBot.Message , match: RegExpExecArray) {
@@ -28,49 +31,13 @@ bot.onText(/\/start/, async function (msg : TelegramBot.Message , match: RegExpE
     if(!user.ExistInDB){
         await user.saveToDB();
         var greeting = "Hi!";
-        await Menu.sendTextMessage(user, greeting);
+        // await Menu.sendTextMessage(user, greeting);
     }
     else{
         const greeting = "Hi! We are already familiar ";
-        await Menu.sendTextMessage(user, greeting);
+        // await Menu.sendTextMessage(user, greeting);
     }
-});
-
-
-
-bot.onText(/\/template(\d)/, async function (msg : TelegramBot.Message , match: RegExpExecArray) {
-    
-    let user = await User.getSender(msg);
-    let templateNum : number = Number(match[1]) ;
-    
-    user.last_message_id = msg.message_id;
-    if(!user.ExistInDB)
-        await user.saveToDB();
-    if(user.templates && user.templates.length > templateNum){
-        user.status = match[0];
-        let template = user.templates[templateNum];
-        user.addReport(new Report("report.docx", "reports/report.docx", template) )
-        Menu.sendTextMessage(user, template.placeholders[0] + "?");
-    }
-    else
-        Menu.sendMenu(user);
-});
-
-bot.onText(/\/gtemplate(\d)/, async function (msg : TelegramBot.Message , match: RegExpExecArray) {
-    
-    let user = await User.getSender(msg);
-    let templateNum : number = Number(match[1]) ;
-    let template = (await DB.GetAllTemplates())[templateNum];
-    user.last_message_id = msg.message_id;
-    if(!user.ExistInDB)
-        await user.saveToDB();
-    if(template){
-        user.status = match[0];
-        user.addReport(new Report("report.docx", "reports/report.docx", template) )
-        Menu.sendTextMessage(user, template.placeholders[0] + "?");
-    }
-    else
-        Menu.sendMenu(user);
+    await Menu.sendStartMenu(user);
 });
 
 
@@ -91,16 +58,16 @@ bot.on('message', async function(msg: TelegramBot.Message ){
             let reportPath = user.generateReport();
             let message = await bot.sendDocument(user.id, reportPath);
             user.last_message_id = message.message_id;
-            await Menu.sendMenu(user);
+            await Menu.deleteMenu(user);
         }
         else{
-            Menu.sendTextMessage(user, user.templates[templateNum].placeholders[replCount] + "?");
+            await Menu.sendTextMessage(user, user.templates[templateNum].placeholders[replCount] + "?");
         }
             
     }
     else if(user.status.search(gtemplateNumPattern) >= 0 ){
         let templateNum: number = Number(gtemplateNumPattern.exec(user.status)[1]);
-        let template = (await DB.GetAllTemplates())[templateNum];
+        let template = await Template.GetPublicTemplate(user.faculty.name, templateNum);
         let replCount = await user.addReportReplacement(msg.text);
         console.log(replCount);
         if(replCount >= template.placeholders.length){
@@ -112,19 +79,24 @@ bot.on('message', async function(msg: TelegramBot.Message ){
             await Menu.sendMenu(user);
         }
         else{
-            Menu.sendTextMessage(user, template.placeholders[replCount] + "?");
+            await Menu.sendTextMessage(user, template.placeholders[replCount] + "?");
         }
             
     }
-    else if(user.status == "crtemplate" && msg.document){
-        console.log(msg.document.file_name);
+    else if(user.status == "/crtemplate" && msg.document){
         let file : TelegramBot.File = await bot.getFile(msg.document.file_id);
         let a: string = await bot.downloadFile(msg.document.file_id, "templates/");
-        console.log(a);
-        let template = new Template( msg.document.file_name, a );
+        let template = new Template( msg.document.file_name, a, user.faculty, true);
+        template.faculty = user.faculty;
         user.addTemplate(template);
         user.status = "free";
-        Menu.sendTextMessage(user, "Ok, i have found " + template.placeholders + " placeholders in your docx");
+        await Menu.sendCreateTemplateMenu(user, `Ok, i have found ${template.placeholders} placeholders in your docx. ` +
+        `\nWould you like to set the template as private or public?`);
+    }
+    else if(user.status == "/crfaculty"){
+        let faculty = new Faculty(msg.text);
+        user.faculty = faculty;
+        await Menu.sendTextMessage(user, `Faculty ${faculty.name} was successfully created`);
     }
 });
 
@@ -163,24 +135,82 @@ bot.on('callback_query', async function (msg : TelegramBot.CallbackQuery ) {
 
             case '/crtemplate':
                 Menu.sendTextMessage(user, "Send your template");
-                user.status = 'crtemplate';
+                user.status = '/crtemplate';
+                break;
+
+            case '/crfaculty':
+                Menu.sendTextMessage(user, "What is the name of your faculty?");
+                user.status = '/crfaculty';
                 break;
 
             case '/alltemplates':
-                throw('not yet implemented');
                 Menu.sendAllTemplates(user);
                 break;
 
             case '/mytemplates':
                 Menu.sendUserTemplates(user);
                 break;
-                
+
+            case '/chfaculty':
+                Menu.sendChangeFacultyMenu(user);
+                break;
+
+            case '/profile':
+                Menu.sendStats(user);
+                break;
+
+            
+            case '/setpubtemplate':
+                let template = user.templates[user.templates.length - 1];
+                await user.setTemplatePrivacy(false);
+                Menu.sendTextMessage(user, `Template ${template.name} was successfully created`);
+                user.status = 'free';
+                break;
+            case '/setprivtemplate':
+                template = user.templates[user.templates.length - 1];
+                await user.setTemplatePrivacy(true);
+                Menu.sendTextMessage(user, `Template ${template.name} was successfully created`);
+                user.status = 'free';
+                break;
             case '/earn_vk_subscribers_task':
             case '/earn_tg_post_view_task':
             case '/earn_tg_subscribers_task':
                 throw('Извини, таких заданий сейчас нет');
                 break;
-                default: break;
+                default:
+                const facultyPattern = /\/setfaculty(.*)/g;
+                const reportPattern = /\/mytemplates(.*)/g;
+                const useTemplatePattern = /\/template(.*)/g;
+                const useGlobTemplatePattern = /\/alltemplate(.*)/g;
+                if(msg.data.search(facultyPattern) >= 0 ){
+                    let facultyName = facultyPattern.exec(msg.data)[1];
+                    user.faculty = await Faculty.GetFacultyByName(facultyName);
+                    Menu.sendTextMessage(user, `Faculty ${facultyName} was selected`);
+                }
+                else if(msg.data.search(reportPattern) >= 0 ){
+                    let offset = Number(reportPattern.exec(msg.data)[1]);
+                    Menu.sendUserTemplates(user,  offset);
+                }
+                else if(msg.data.search(useTemplatePattern) >= 0){
+                    let templateNum : number = Number(useTemplatePattern.exec(msg.data)[1]) ;
+                    user.status = msg.data;
+                    let template = user.templates[templateNum];
+                    await user.addReport(new Report("report.docx", "reports/report.docx", template) )
+                    await Menu.sendTextMessage(user, template.placeholders[0] + "?");
+                }
+                else if(msg.data.search(useGlobTemplatePattern) >= 0){
+                    let templateNum : number = Number(useGlobTemplatePattern.exec(msg.data)[1]) ;
+                    let gtemplate = await Template.GetPublicTemplate(user.faculty.name, templateNum);
+                    user.status = msg.data;
+                    await user.addReport(new Report("report.docx", "reports/report.docx", gtemplate) )
+                    await Menu.sendTextMessage(user, gtemplate.placeholders[0] + "?");
+                }
+
+
+
+
+                break;
+
         }
     }
     catch(err){

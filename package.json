@@ -5,12 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "run1": " node ./dist/bundle.js",
     "compile": "babel src --out-dir .compiled --source-maps",
     "watch": "babel src --out-dir .compiled --source-maps --watch",
     "dev": "concurrently --kill-others \" webpack \" npm run run1",
-    "start": "node dist/bundle.js",
-    "run": "node dist/bundle.js"
+    "start": "node dist/script.js",
+    "run": "node dist/script.js"
   },
   "author": "Isliam",
   "license": "ISC",

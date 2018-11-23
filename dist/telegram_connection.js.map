@@ -1,0 +1,1 @@
+{"version":3,"file":"telegram_connection.js","sourceRoot":"","sources":["../src/telegram_connection.ts"],"names":[],"mappings":";;AAAA,IAAI,KAAK,GAAG,+CAA+C,CAAC;AAC5D,IAAI,WAAW,GAAG,OAAO,CAAC,uBAAuB,CAAC,CAAC;AACnD,IAAI,GAAG,GAAG,IAAI,WAAW,CAAE,KAAK,EAAE,EAAC,OAAO,EAAE,IAAI,EAAC,CAAC,CAAC;AAE1C,kBAAG"}

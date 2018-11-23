@@ -1,49 +1,59 @@
 
-import {bot} from '../src/telegram_connection';
+import {bot} from './telegram_connection';
 import DB from './DB';
 import * as fs from 'fs';
 import * as Path from 'path';
 
-import * as doc from "../src/docx_processor";
+import * as doc from "./docx_processor";
+import { IFaculty } from './faculty';
 
 export interface ITemplate{
     name: string,
     path: string,
-    placeholders: string[]
+    placeholders: string[],
+    faculty:IFaculty,
+    isPrivate : boolean,
+    confirmed: boolean
 }
 
 export class Template implements ITemplate {
     private _name: string;
     private _path: string;
     private _placeholders : string[];
+    private _faculty:IFaculty;
+    private _isPrivate:boolean;
+    private _confirmed: boolean;
 
 
-    constructor(name:string, path: string, placeholders? : string[]){
+    constructor(name:string, path: string, faculty : IFaculty, isPrivate: boolean, confirmed: boolean, placeholders? : string[]){
         // super();
         this._name = name;
         this._path = path;
         this._placeholders = placeholders? placeholders : doc.tagsCount(path);
+        this._faculty = faculty;
+        this._confirmed = confirmed;
+        this._isPrivate =  isPrivate;
+    }
+
+    public static async GetPublicTemplate(faculty: string, id : number){
+        let template: ITemplate = (await DB.GetPublicTemplates(faculty, 10000))[id];
+
+        return Template.fromJSON(template);
     }
     
    
-
-    static async fromDB(name: string){
-        var jsonT = await DB.GetTemplate(name);
-        console.log(JSON.stringify(jsonT));
-        let template = Template.fromJSON(jsonT);
-        return template;
-    }
-
-
     static fromJSON(jsonT: ITemplate){
-        return new Template(jsonT.name, jsonT.path, jsonT.placeholders);
+        return new Template(jsonT.name, jsonT.path, jsonT.faculty, jsonT.isPrivate, jsonT.confirmed, jsonT.placeholders);
     }
 
     toJSON() : ITemplate {
         let jsonU = {
             name : this.name,
             path : this.path,
-            placeholders: this._placeholders
+            placeholders: this._placeholders,
+            faculty: this._faculty,
+            isPrivate: this._isPrivate,
+            confirmed: this._confirmed
         };
         return jsonU;
     }
@@ -53,8 +63,6 @@ export class Template implements ITemplate {
     //#region getters-setters
     set name(name: string){
         this._name = name;
-        console.log("update");
-        // this.update();
     }
 
     get name(): string{
@@ -67,12 +75,34 @@ export class Template implements ITemplate {
 
     set path(path: string){
         this._path = path;
-        console.log("update");
-        // this.update();
     }
 
     get path(): string{
         return this._path;
+    }
+
+    set faculty(faculty:IFaculty){
+        this._faculty = faculty;
+    }
+
+    get faculty(): IFaculty{
+        return this._faculty;
+    }
+
+    set isPrivate(isPrivate:boolean){
+        this._isPrivate = isPrivate;
+    }
+
+    get isPrivate(): boolean{
+        return this._isPrivate;
+    }
+
+    set confirmed(confirmed:boolean){
+        this._confirmed = confirmed;
+    }
+
+    get confirmed(): boolean{
+        return this._confirmed;
     }
     //#endregion
 }

@@ -1,6 +1,6 @@
 import { Template, ITemplate } from "./template";
 
-import * as doc from "../src/docx_processor";
+import * as doc from "./docx_processor";
 
 
 

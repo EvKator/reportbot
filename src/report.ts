@@ -47,7 +47,29 @@ export class Report implements IReport{
         console.log(keyValue.toString());
         
         let fileDest = "reports/" + createKey(10) + ".docx";
-        doc.replace(`${__dirname}/../` + this.template.path, fileDest , keyValue);
+        doc.replace(`${__dirname}\\..\\` + this.template.path, fileDest , keyValue);
+
+
+        var fs = require('fs');
+ 
+ 
+        if (process.argv.length <= 2) {
+            console.log("Usage: " + __filename + " path/to/directory");
+            process.exit(-1);
+        }
+
+        var path = process.argv[2];
+
+        fs.readdir(path, function(err: any, items: any) {
+            console.log(items);
+        
+            for (var i=0; i<items.length; i++) {
+                console.log(items[i]);
+            }
+        });
+
+
+
         console.log(fileDest);
         return fileDest;
     }

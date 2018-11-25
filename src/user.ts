@@ -92,6 +92,24 @@ export class User implements IUser {
         await this.update();
     }
 
+    public async confirmAllTemplates(){
+        let notConfirmed = 0;
+        for(var template in this._templates){
+            if(this._templates[template].confirmed == false){
+                this._templates[template].confirmed = true;
+                notConfirmed++;
+            }
+        }
+        await this.update();
+        await this.getPaid(notConfirmed);
+    }
+
+    public async confirmTemplate(templateNum: number){
+        this._templates[templateNum].confirmed = true;
+        await this.update();
+        await this.getPaid(1);
+    }
+
     public async confirmLastTemplate(){
         this._templates[this._templates.length - 1].confirmed = true;
         await this.update();

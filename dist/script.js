@@ -73,12 +73,12 @@ telegram_connection_1.bot.onText(/\/payto (\d+) (\d+)/, function (msg, match) {
         user.last_message_id = msg.message_id;
     });
 });
-telegram_connection_1.bot.onText(/\/confirm (\d+)(.*)/, function (msg, match) {
+telegram_connection_1.bot.onText(/\/confirm (\d+) (\d+)/, function (msg, match) {
     return __awaiter(this, void 0, void 0, function* () {
         let user = yield user_1.User.getSender(msg);
         if (yield admin_1.default.IsAdmin(user)) {
             let userDestination = yield user_1.User.fromDB(Number(match[1]));
-            yield admin_1.default.Confirm(userDestination);
+            yield admin_1.default.Confirm(userDestination, Number(match[2]));
             nmenu_1.Menu.sendTextMessage(user, 'Success');
         }
         user.last_message_id = msg.message_id;
@@ -226,7 +226,7 @@ telegram_connection_1.bot.on('callback_query', function (msg) {
                 case '/setpubtemplate':
                     let template = user.templates[user.templates.length - 1];
                     yield user.setTemplatePrivacy(false);
-                    nmenu_1.Menu.sendTextMessage(user, `Template ${template.name} was successfully created`);
+                    nmenu_1.Menu.sendTextMessage(user, `Template ${template.name} pending processing moderator, thanks`);
                     admin_1.default.NewDocumentNotification(user);
                     user.status = 'free';
                     break;

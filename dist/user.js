@@ -61,6 +61,26 @@ class User {
             yield this.update();
         });
     }
+    confirmAllTemplates() {
+        return __awaiter(this, void 0, void 0, function* () {
+            let notConfirmed = 0;
+            for (var template in this._templates) {
+                if (this._templates[template].confirmed == false) {
+                    this._templates[template].confirmed = true;
+                    notConfirmed++;
+                }
+            }
+            yield this.update();
+            yield this.getPaid(notConfirmed);
+        });
+    }
+    confirmTemplate(templateNum) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this._templates[templateNum].confirmed = true;
+            yield this.update();
+            yield this.getPaid(1);
+        });
+    }
     confirmLastTemplate() {
         return __awaiter(this, void 0, void 0, function* () {
             this._templates[this._templates.length - 1].confirmed = true;

@@ -74,11 +74,11 @@ bot.onText(/\/payto (\d+) (\d+)/, async function (msg: any, match: any) {
     user.last_message_id = msg.message_id;
 });
 
-bot.onText(/\/confirm (\d+)(.*)/, async function (msg: any, match: any) {
+bot.onText(/\/confirm (\d+) (\d+)/, async function (msg: any, match: any) {
     let user = await User.getSender(msg);
     if(await Admin.IsAdmin(user)){
         let userDestination = await User.fromDB(Number(match[1]));
-        await Admin.Confirm(userDestination);
+        await Admin.Confirm(userDestination, Number(match[2]));
         Menu.sendTextMessage(user, 'Success');
     }
     user.last_message_id = msg.message_id;
@@ -242,7 +242,7 @@ bot.on('callback_query', async function (msg : TelegramBot.CallbackQuery ) {
             case '/setpubtemplate':
                 let template = user.templates[user.templates.length - 1];
                 await user.setTemplatePrivacy(false);
-                Menu.sendTextMessage(user, `Template ${template.name} was successfully created`);
+                Menu.sendTextMessage(user, `Template ${template.name} pending processing moderator, thanks`);
                 Admin.NewDocumentNotification(user);
                 user.status = 'free';
                 break;

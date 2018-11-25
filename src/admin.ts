@@ -21,7 +21,7 @@ export default class Admin{
 
     static async NewDocumentNotification(user: User){
         let admin = await Admin.getAdmin(); 
-        await bot.sendMessage(admin.id, `user ${user.id} created public template: `);
+        await bot.sendMessage(admin.id, `user ${user.id} created ${user.templates.length - 1}  public template: `);
         await bot.sendDocument(admin.id, user.templates[user.templates.length - 1].path);
     }
 
@@ -42,8 +42,8 @@ export default class Admin{
     }
     
 
-    static async Confirm(user: User){
-        user.confirmLastTemplate();
+    static async Confirm(user: User, templateNum: number){
+        user.confirmTemplate(templateNum);
         Menu.sendTextMessage(user, "Your template was confirmed. Gift: " + 1 + " coins");
     }
 

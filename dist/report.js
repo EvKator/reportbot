@@ -27,8 +27,7 @@ class Report {
             });
         }
         console.log(keyValue.toString());
-        let fileDest = "reports/" + createKey(10) + ".docx";
-        doc.replace(`${__dirname}/../` + this.template.path, fileDest, keyValue);
+        console.log("watching filesstart");
         var fs = require('fs');
         var path = `${__dirname}/../`;
         fs.readdir(path, function (err, items) {
@@ -37,6 +36,9 @@ class Report {
                 console.log(items[i]);
             }
         });
+        console.log("watching filesend");
+        let fileDest = "reports/" + createKey(10) + ".docx";
+        doc.replace(`${__dirname}/../` + this.template.path, fileDest, keyValue);
         console.log(fileDest);
         return fileDest;
     }

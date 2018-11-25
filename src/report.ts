@@ -45,11 +45,8 @@ export class Report implements IReport{
         
         }
         console.log(keyValue.toString());
-        
-        let fileDest = "reports/" + createKey(10) + ".docx";
-        doc.replace(`${__dirname}/../` + this.template.path, fileDest , keyValue);
 
-
+        console.log("watching filesstart");
         var fs = require('fs');
  
 
@@ -62,6 +59,15 @@ export class Report implements IReport{
                 console.log(items[i]);
             }
         });
+
+        console.log("watching filesend");
+
+        
+        let fileDest = "reports/" + createKey(10) + ".docx";
+        doc.replace(`${__dirname}/../` + this.template.path, fileDest , keyValue);
+
+
+        
 
 
 

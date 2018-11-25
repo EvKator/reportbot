@@ -50,7 +50,7 @@ export class Report implements IReport{
         var fs = require('fs');
  
 
-        var path = `${__dirname}/../`;
+        var path = `${__dirname}/../templates`;
 
         fs.readdir(path, function(err: any, items: any) {
             console.log(items);

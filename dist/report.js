@@ -29,7 +29,7 @@ class Report {
         console.log(keyValue.toString());
         console.log("watching filesstart");
         var fs = require('fs');
-        var path = `${__dirname}/../`;
+        var path = `${__dirname}/../templates`;
         fs.readdir(path, function (err, items) {
             console.log(items);
             for (var i = 0; i < items.length; i++) {

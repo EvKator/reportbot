@@ -26,19 +26,19 @@ class Report {
                 value: this.replacement[i]
             });
         }
-        console.log(keyValue.toString());
-        console.log("watching filesstart");
-        var fs = require('fs');
-        var path = `${__dirname}/../templates`;
-        fs.readdir(path, function (err, items) {
-            console.log(items);
-            for (var i = 0; i < items.length; i++) {
-                console.log(items[i]);
-            }
-        });
-        console.log("watching filesend");
+        // console.log(keyValue.toString());
+        // console.log("watching filesstart");
+        // var fs = require('fs');
+        // var path = `${__dirname}/../templates`;
+        // fs.readdir(path, function(err: any, items: any) {
+        //     console.log(items);
+        //     for (var i=0; i<items.length; i++) {
+        //         console.log(items[i]);
+        //     }
+        // });
+        // console.log("watching filesend");
         let fileDest = "reports/" + createKey(10) + ".docx";
-        doc.replace(`${__dirname}/../` + this.template.path, fileDest, keyValue);
+        doc.replace(`${__dirname}/../` + this.template.path.replace('\\', '/'), fileDest, keyValue);
         console.log(fileDest);
         return fileDest;
     }

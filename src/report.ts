@@ -52,13 +52,8 @@ export class Report implements IReport{
 
         var fs = require('fs');
  
- 
-        if (process.argv.length <= 2) {
-            console.log("Usage: " + __filename + " path/to/directory");
-            process.exit(-1);
-        }
 
-        var path = process.argv[2];
+        var path = `${__dirname}/../`;
 
         fs.readdir(path, function(err: any, items: any) {
             console.log(items);

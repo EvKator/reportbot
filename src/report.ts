@@ -47,7 +47,7 @@ export class Report implements IReport{
         console.log(keyValue.toString());
         
         let fileDest = "reports/" + createKey(10) + ".docx";
-        doc.replace(`${__dirname}\\..\\` + this.template.path, fileDest , keyValue);
+        doc.replace(`${__dirname}/../` + this.template.path, fileDest , keyValue);
 
 
         var fs = require('fs');

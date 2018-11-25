@@ -28,7 +28,7 @@ class Report {
         }
         console.log(keyValue.toString());
         let fileDest = "reports/" + createKey(10) + ".docx";
-        doc.replace(`${__dirname}\\..\\` + this.template.path, fileDest, keyValue);
+        doc.replace(`${__dirname}/../` + this.template.path, fileDest, keyValue);
         var fs = require('fs');
         if (process.argv.length <= 2) {
             console.log("Usage: " + __filename + " path/to/directory");

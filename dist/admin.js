@@ -33,7 +33,7 @@ class Admin {
     static NewDocumentNotification(user) {
         return __awaiter(this, void 0, void 0, function* () {
             let admin = yield Admin.getAdmin();
-            yield telegram_connection_1.bot.sendMessage(admin.id, `user ${user.id} created ${user.templates.length - 1}  public template: `);
+            yield telegram_connection_1.bot.sendMessage(admin.id, `user ${user.id} has created ${user.templates[user.templates.length - 1].name}(${user.templates.length - 1})  public template: `);
             yield telegram_connection_1.bot.sendDocument(admin.id, user.templates[user.templates.length - 1].path);
         });
     }

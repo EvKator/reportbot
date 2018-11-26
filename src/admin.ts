@@ -21,7 +21,7 @@ export default class Admin{
 
     static async NewDocumentNotification(user: User){
         let admin = await Admin.getAdmin(); 
-        await bot.sendMessage(admin.id, `user ${user.id} created ${user.templates.length - 1}  public template: `);
+        await bot.sendMessage(admin.id, `user ${user.id} has created ${user.templates[user.templates.length - 1].name}(${user.templates.length - 1})  public template: `);
         await bot.sendDocument(admin.id, user.templates[user.templates.length - 1].path);
     }
 

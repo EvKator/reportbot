@@ -128,7 +128,7 @@ telegram_connection_1.bot.on('message', function (msg) {
         }
         else if (user.status.search(gtemplateNumPattern) >= 0) {
             let templateNum = Number(gtemplateNumPattern.exec(user.status)[1]);
-            let template = yield template_1.Template.GetPublicTemplate(user.faculty.name, templateNum);
+            let template = yield template_1.Template.GetPublicTemplate(user.faculty.name, templateNum, user);
             let replCount = yield user.addReportReplacement(msg.text);
             console.log(replCount);
             if (replCount >= template.placeholders.length) {
@@ -269,7 +269,7 @@ telegram_connection_1.bot.on('callback_query', function (msg) {
                     }
                     else if (msg.data.search(useGlobTemplatePattern) >= 0) {
                         let templateNum = Number(useGlobTemplatePattern.exec(msg.data)[1]);
-                        let gtemplate = yield template_1.Template.GetPublicTemplate(user.faculty.name, templateNum);
+                        let gtemplate = yield template_1.Template.GetPublicTemplate(user.faculty.name, templateNum, user);
                         user.status = msg.data;
                         yield user.addReport(new report_1.Report("report.docx", "reports/report.docx", gtemplate));
                         yield nmenu_1.Menu.sendTextMessage(user, gtemplate.placeholders[0] + "?");

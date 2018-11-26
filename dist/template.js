@@ -20,9 +20,9 @@ class Template {
         this._confirmed = confirmed;
         this._isPrivate = isPrivate;
     }
-    static GetPublicTemplate(faculty, id) {
+    static GetPublicTemplate(faculty, id, user) {
         return __awaiter(this, void 0, void 0, function* () {
-            let template = (yield DB_1.default.GetPublicTemplates(faculty, 10000))[id];
+            let template = (yield DB_1.default.GetPublicTemplates(faculty, 10000, user.templates))[id];
             return Template.fromJSON(template);
         });
     }

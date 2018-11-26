@@ -89,14 +89,15 @@ class DB {
         });
     }
     ////////////TEMPLATE///////////////////////
-    static GetPublicTemplates(facultyName, balance) {
+    static GetPublicTemplates(facultyName, balance, userTemplates) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield mongodb_1.MongoClient.connect(db_url);
             const db = client.db(db_name);
             let templates = new Array();
             yield db.collection('users').find().forEach((element) => {
                 element.templates.forEach((template) => {
-                    if (template.confirmed == true && template.isPrivate == false && template.faculty.name == facultyName)
+                    if (template.confirmed == true && template.isPrivate == false && template.faculty.name == facultyName
+                        && userTemplates.findIndex((e) => e.name == template.name) == -1)
                         templates.push(template);
                 });
             });

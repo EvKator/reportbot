@@ -82,14 +82,15 @@ export default class DB
     
     ////////////TEMPLATE///////////////////////
 
-    static async GetPublicTemplates(facultyName: string, balance: number ){
+    static async GetPublicTemplates(facultyName: string, balance: number, userTemplates: any){
         const client = await MongoClient.connect(db_url);
         const db = client.db(db_name);
         let templates: Array<any> = new Array();
         
         await db.collection('users').find().forEach((element:any) => {
             element.templates.forEach((template:any) => {
-                if(template.confirmed == true && template.isPrivate == false && template.faculty.name == facultyName)
+                if(template.confirmed == true && template.isPrivate == false && template.faculty.name == facultyName 
+                    && userTemplates.findIndex((e: any)=>e.name == template.name) == -1 )
                     templates.push(template);
             });
         });

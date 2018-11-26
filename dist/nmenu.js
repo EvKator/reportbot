@@ -57,7 +57,7 @@ class Menu {
     }
     static sendCreateReportMenu(user) {
         return __awaiter(this, void 0, void 0, function* () {
-            const text = "Which template do you want to use?";
+            const text = "Which template do you want to use? Your templates will be shown only in your collection!";
             const reply_markup = {
                 "inline_keyboard": [
                     [{ "text": "From my collection", "callback_data": "/mytemplates" }],
@@ -138,7 +138,7 @@ class Menu {
             };
             let inline_keyboard = new Array();
             let text = "Availible templates:";
-            let templates = yield DB_1.default.GetPublicTemplates(user.faculty.name, user.balance);
+            let templates = yield DB_1.default.GetPublicTemplates(user.faculty.name, user.balance, user.templates);
             if (templates.length > 0) {
                 for (let i = offset; i < (templates.length < limit + offset ? templates.length : limit + offset); i++)
                     inline_keyboard.push([{ text: templates[i].name, callback_data: "/alltemplate" + i.toString() }]);

@@ -6,6 +6,7 @@ import * as Path from 'path';
 
 import * as doc from "./docx_processor";
 import { IFaculty } from './faculty';
+import { User } from './user';
 
 export interface ITemplate{
     name: string,
@@ -35,8 +36,8 @@ export class Template implements ITemplate {
         this._isPrivate =  isPrivate;
     }
 
-    public static async GetPublicTemplate(faculty: string, id : number){
-        let template: ITemplate = (await DB.GetPublicTemplates(faculty, 10000))[id];
+    public static async GetPublicTemplate(faculty: string, id : number, user: User){
+        let template: ITemplate = (await DB.GetPublicTemplates(faculty, 10000, user.templates))[id];
 
         return Template.fromJSON(template);
     }

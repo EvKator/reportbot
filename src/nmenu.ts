@@ -59,7 +59,7 @@ export class Menu {
     }
 
     static async sendCreateReportMenu(user: User) {
-        const text = "Which template do you want to use?";
+        const text = "Which template do you want to use? Your templates will be shown only in your collection!";
         const reply_markup = {
                 "inline_keyboard": [
                     [{"text": "From my collection", "callback_data": "/mytemplates"}],
@@ -150,7 +150,7 @@ export class Menu {
 
         let text = "Availible templates:";
 
-        let templates = await DB.GetPublicTemplates(user.faculty.name, user.balance);
+        let templates = await DB.GetPublicTemplates(user.faculty.name, user.balance, user.templates);
         if(templates.length > 0){
 
             for(let i = offset; i < (templates.length < limit + offset? templates.length : limit + offset); i++)

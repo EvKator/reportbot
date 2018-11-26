@@ -129,7 +129,7 @@ bot.on('message', async function(msg: TelegramBot.Message ){
     }
     else if(user.status.search(gtemplateNumPattern) >= 0 ){
         let templateNum: number = Number(gtemplateNumPattern.exec(user.status)[1]);
-        let template = await Template.GetPublicTemplate(user.faculty.name, templateNum);
+        let template = await Template.GetPublicTemplate(user.faculty.name, templateNum, user);
         let replCount = await user.addReportReplacement(msg.text);
         console.log(replCount);
         if(replCount >= template.placeholders.length){
@@ -285,7 +285,7 @@ bot.on('callback_query', async function (msg : TelegramBot.CallbackQuery ) {
                 }
                 else if(msg.data.search(useGlobTemplatePattern) >= 0){
                     let templateNum : number = Number(useGlobTemplatePattern.exec(msg.data)[1]) ;
-                    let gtemplate = await Template.GetPublicTemplate(user.faculty.name, templateNum);
+                    let gtemplate = await Template.GetPublicTemplate(user.faculty.name, templateNum, user);
                     user.status = msg.data;
                     await user.addReport(new Report("report.docx", "reports/report.docx", gtemplate) )
                     await Menu.sendTextMessage(user, gtemplate.placeholders[0] + "?");
